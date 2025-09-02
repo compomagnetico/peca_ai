@@ -1,5 +1,6 @@
 import { WorkshopRegistrationForm } from "@/components/WorkshopRegistrationForm";
 import { AutoPartsManager } from "@/components/AutoPartsManager";
+import { BudgetRequestForm } from "@/components/BudgetRequestForm";
 import { Separator } from "@/components/ui/separator";
 
 const Index = () => {
@@ -13,6 +14,8 @@ const Index = () => {
           </p>
         </header>
         <main className="flex flex-col items-center space-y-8">
+          <BudgetRequestForm />
+          <Separator className="my-8" />
           <WorkshopRegistrationForm />
           <Separator className="my-8" />
           <AutoPartsManager />
@@ -20,6 +23,3 @@ const Index = () => {
       </div>
     </div>
   );
-};
-
-export default Index;
