@@ -14,25 +14,36 @@ const ProfilePage = () => {
     <div className="flex justify-center">
       <Card className="w-full max-w-lg">
         <CardHeader>
-          <CardTitle>Meu Perfil</CardTitle>
+          <CardTitle>Perfil da Oficina</CardTitle>
           <CardDescription>
-            Atualize as informações do seu perfil aqui.
+            Atualize as informações da sua oficina aqui.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome</Label>
-            <Input id="name" placeholder="Seu nome" defaultValue="Usuário Padrão" />
+            <Label htmlFor="address">Endereço da Oficina</Label>
+            <Input
+              id="address"
+              placeholder="Ex: Rua das Peças, 123, Bairro Centro"
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="whatsapp">WhatsApp do Responsável</Label>
+            <Input id="whatsapp" placeholder="Ex: (11) 98888-7777" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="budget-time">
+              Tempo máximo para o orçamento (em minutos)
+            </Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="Seu email"
-              defaultValue="usuario@exemplo.com"
-              disabled
+              id="budget-time"
+              type="number"
+              placeholder="Ex: 60"
             />
+            <p className="text-sm text-muted-foreground">
+              Define o tempo que você tem para responder a uma solicitação de
+              orçamento.
+            </p>
           </div>
           <Button>Salvar Alterações</Button>
         </CardContent>
