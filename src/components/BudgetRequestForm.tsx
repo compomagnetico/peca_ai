@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,9 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 const formSchema = z.object({
-  partName: z.string().min(1, "Nome da peça é obrigatório."),
+  parts: z.array(z.object({
+    name: z.string().min(1, "Nome da peça é obrigatório."),
+  })).min(1, "Adicione pelo menos uma peça."),
   carModel: z.string().min(1, "Modelo do carro é obrigatório."),
   carYear: z.string().min(1, "Ano do carro é obrigatório."),
 });
@@ -61,10 +64,15 @@ export function BudgetRequestForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      partName: "",
+      parts: [{ name: "" }],
       carModel: "",
       carYear: "",
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "parts",
   });
 
   const handleSelectAll = (checked: boolean) => {
@@ -98,7 +106,7 @@ export function BudgetRequestForm() {
 
     const payload = {
       partDetails: {
-        name: values.partName,
+        parts: values.parts.map(p => p.name),
         carModel: values.carModel,
         carYear: values.carYear,
       },
@@ -137,26 +145,13 @@ export function BudgetRequestForm() {
       <CardHeader>
         <CardTitle>Solicitar Orçamento de Peça</CardTitle>
         <CardDescription>
-          Preencha os detalhes da peça e selecione para quais autopeças enviar.
+          Preencha os detalhes do carro, adicione as peças e selecione para quais autopeças enviar.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="partName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome da Peça</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Amortecedor Dianteiro" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="carModel"
@@ -183,6 +178,47 @@ export function BudgetRequestForm() {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="space-y-4">
+              <FormLabel>Peças Necessárias</FormLabel>
+              {fields.map((field, index) => (
+                <FormField
+                  key={field.id}
+                  control={form.control}
+                  name={`parts.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input placeholder={`Peça ${index + 1}`} {...field} />
+                        </FormControl>
+                        {fields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => append({ name: "" })}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Peça
+              </Button>
             </div>
 
             <div>
