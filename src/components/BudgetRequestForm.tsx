@@ -97,28 +97,42 @@ export function BudgetRequestForm() {
       return;
     }
 
-    const toastId = showLoading("Enviando orçamento...");
+    const toastId = showLoading("Registrando e enviando solicitação...");
     setIsSubmitting(true);
 
-    const selectedShopsDetails = autoParts?.filter((part) =>
-      selectedShops.includes(part.id)
-    );
-
-    const payload = {
-      partDetails: {
-        parts: values.parts.map(p => p.name),
-        carModel: values.carModel,
-        carYear: values.carYear,
-      },
-      selectedShops: selectedShopsDetails,
-    };
-
     try {
+      // Step 1: Create the budget request to get the unique short_id
+      const { data: requestData, error: requestError } = await supabase
+        .from("budget_requests")
+        .insert({
+          car_model: values.carModel,
+          car_year: values.carYear,
+          parts: values.parts.map(p => p.name),
+        })
+        .select("short_id")
+        .single();
+
+      if (requestError) throw requestError;
+      const shortId = requestData.short_id;
+
+      // Step 2: Send the short_id and other details to the webhook
+      const selectedShopsDetails = autoParts?.filter((part) =>
+        selectedShops.includes(part.id)
+      );
+
+      const payload = {
+        short_id: shortId,
+        partDetails: {
+          parts: values.parts.map(p => p.name),
+          carModel: values.carModel,
+          carYear: values.carYear,
+        },
+        selectedShops: selectedShopsDetails,
+      };
+
       const response = await fetch("https://webhook.usoteste.shop/webhook/teste", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -127,7 +141,7 @@ export function BudgetRequestForm() {
       }
 
       dismissToast(toastId);
-      showSuccess("Orçamento solicitado com sucesso!");
+      showSuccess(`Orçamento #${shortId} solicitado com sucesso!`);
       form.reset();
       setSelectedShops([]);
     } catch (error) {

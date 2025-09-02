@@ -7,13 +7,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    // Create a Supabase client with the service role key to bypass RLS
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -21,8 +19,8 @@ serve(async (req) => {
 
     const body = await req.json()
 
-    // Basic validation for required fields
-    const requiredFields = ['shop_name', 'shop_whatsapp', 'car_model', 'car_year', 'parts_and_prices', 'total_price'];
+    // Validate required fields, now using short_id
+    const requiredFields = ['short_id', 'shop_name', 'shop_whatsapp', 'car_model', 'car_year', 'parts_and_prices', 'total_price'];
     for (const field of requiredFields) {
       if (!(field in body)) {
         return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
@@ -32,18 +30,29 @@ serve(async (req) => {
       }
     }
 
-    // Insert the new budget response into the database
+    // 1. Find the original request using the short_id
+    const { data: requestData, error: requestError } = await supabaseAdmin
+      .from('budget_requests')
+      .select('id')
+      .eq('short_id', body.short_id)
+      .single()
+
+    if (requestError) throw new Error(`Request with short_id ${body.short_id} not found.`);
+    const requestId = requestData.id;
+
+    // 2. Insert the new budget response with the correct UUID request_id
     const { data, error } = await supabaseAdmin
       .from('budget_responses')
       .insert([
         {
+          request_id: requestId,
           shop_name: body.shop_name,
           shop_whatsapp: body.shop_whatsapp,
           car_model: body.car_model,
           car_year: body.car_year,
           parts_and_prices: body.parts_and_prices,
           total_price: body.total_price,
-          notes: body.notes, // Optional field
+          notes: body.notes,
         },
       ])
       .select()
@@ -51,6 +60,12 @@ serve(async (req) => {
     if (error) {
       throw error
     }
+
+    // 3. Optionally, update the status of the original request
+    await supabaseAdmin
+      .from('budget_requests')
+      .update({ status: 'answered' })
+      .eq('id', requestId)
 
     return new Response(JSON.stringify({ success: true, data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
