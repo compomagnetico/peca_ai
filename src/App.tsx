@@ -6,8 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import BudgetRequestPage from "./pages/BudgetRequest";
-import WorkshopRegistrationPage from "./pages/WorkshopRegistration";
 import AutoPartsPage from "./pages/AutoParts";
+import ProfilePage from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,8 +22,8 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/budget-request" element={<BudgetRequestPage />} />
-            <Route path="/workshop-registration" element={<WorkshopRegistrationPage />} />
             <Route path="/auto-parts" element={<AutoPartsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
