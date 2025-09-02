@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { Home, Car, FileText, User } from "lucide-react";
+import { Home, Car, FileText, User, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
+  { name: "Respostas", href: "/budget-responses", icon: Inbox },
   { name: "Gerenciar Autopeças", href: "/auto-parts", icon: Car },
   { name: "Perfil", href: "/profile", icon: User },
 ];

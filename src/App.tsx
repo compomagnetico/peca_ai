@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import BudgetRequestPage from "./pages/BudgetRequest";
 import AutoPartsPage from "./pages/AutoParts";
 import ProfilePage from "./pages/Profile";
+import BudgetResponsesPage from "./pages/BudgetResponses";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/budget-request" element={<BudgetRequestPage />} />
+            <Route path="/budget-responses" element={<BudgetResponsesPage />} />
             <Route path="/auto-parts" element={<AutoPartsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
