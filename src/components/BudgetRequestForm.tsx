@@ -101,13 +101,14 @@ export function BudgetRequestForm() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Create the budget request to get the unique short_id
+      // Step 1: Create the budget request with selected shops
       const { data: requestData, error: requestError } = await supabase
         .from("budget_requests")
         .insert({
           car_model: values.carModel,
           car_year: values.carYear,
           parts: values.parts.map(p => p.name),
+          selected_shops_ids: selectedShops, // Save selected shop IDs
         })
         .select("short_id")
         .single();

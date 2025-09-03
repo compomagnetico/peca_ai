@@ -19,7 +19,6 @@ serve(async (req) => {
 
     const body = await req.json()
 
-    // Validate required fields (further simplified)
     const requiredFields = ['short_id', 'shop_whatsapp', 'parts_and_prices', 'total_price'];
     for (const field of requiredFields) {
       if (!(field in body)) {
@@ -30,7 +29,7 @@ serve(async (req) => {
       }
     }
 
-    // 1. Find the shop name using the provided WhatsApp number
+    // 1. Find the shop name
     const { data: shopData, error: shopError } = await supabaseAdmin
       .from('autopecas')
       .select('nome')
@@ -42,25 +41,26 @@ serve(async (req) => {
     }
     const shopName = shopData.nome;
 
-    // 2. Find the original request using the short_id
+    // 2. Find the original request to get its ID and list of selected shops
     const { data: requestData, error: requestError } = await supabaseAdmin
       .from('budget_requests')
-      .select('id')
+      .select('id, selected_shops_ids')
       .eq('short_id', body.short_id)
       .single()
 
-    if (requestError) {
+    if (requestError || !requestData) {
         throw new Error(`Request with short_id ${body.short_id} not found.`);
     }
     const requestId = requestData.id;
+    const selectedShopsIds = requestData.selected_shops_ids || [];
 
-    // 3. Insert the new budget response with the looked-up shop name
-    const { data, error } = await supabaseAdmin
+    // 3. Insert the new budget response
+    const { data: responseInsertData, error: responseInsertError } = await supabaseAdmin
       .from('budget_responses')
       .insert([
         {
           request_id: requestId,
-          shop_name: shopName, // Use the name we found
+          shop_name: shopName,
           shop_whatsapp: body.shop_whatsapp,
           parts_and_prices: body.parts_and_prices,
           total_price: body.total_price,
@@ -69,17 +69,32 @@ serve(async (req) => {
       ])
       .select()
 
-    if (error) {
-      throw error
+    if (responseInsertError) {
+      throw responseInsertError
     }
 
-    // 4. Optionally, update the status of the original request
+    // 4. Check if all shops have responded
+    const { count: responseCount, error: countError } = await supabaseAdmin
+      .from('budget_responses')
+      .select('*', { count: 'exact', head: true })
+      .eq('request_id', requestId)
+
+    if (countError) {
+      throw countError;
+    }
+
+    let newStatus = 'answered';
+    if (responseCount >= selectedShopsIds.length) {
+      newStatus = 'completed';
+    }
+
+    // 5. Update the status of the original request
     await supabaseAdmin
       .from('budget_requests')
-      .update({ status: 'answered' })
+      .update({ status: newStatus })
       .eq('id', requestId)
 
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ success: true, data: responseInsertData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
