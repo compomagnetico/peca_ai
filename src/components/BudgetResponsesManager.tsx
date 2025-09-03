@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
@@ -24,13 +24,24 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useMemo } from "react";
-import { RefreshCw, MessageSquare } from "lucide-react";
+import { useMemo, useState } from "react";
+import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
+import { showError, showSuccess } from "@/utils/toast";
 
 type BudgetResponse = {
   id: string;
@@ -40,6 +51,7 @@ type BudgetResponse = {
   parts_and_prices: { part: string; price: number }[];
   total_price: number;
   notes?: string;
+  request_id: string;
   budget_requests: {
     car_model: string;
     car_year: string;
@@ -49,19 +61,45 @@ type BudgetResponse = {
 const fetchBudgetResponses = async (): Promise<BudgetResponse[]> => {
   const { data, error } = await supabase
     .from("budget_responses")
-    .select(`
+    .select(
+      `
       *,
       budget_requests (
         car_model,
         car_year
       )
-    `)
+    `
+    )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data as BudgetResponse[];
 };
 
+const deleteBudgetResponse = async (responseId: string) => {
+  const { error } = await supabase
+    .from("budget_responses")
+    .delete()
+    .eq("id", responseId);
+  if (error) throw new Error(error.message);
+};
+
+const deleteBudgetRequest = async (requestId: string) => {
+  const { error } = await supabase
+    .from("budget_requests")
+    .delete()
+    .eq("id", requestId);
+  if (error) throw new Error(error.message);
+};
+
 export function BudgetResponsesManager() {
+  const queryClient = useQueryClient();
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    type: "response" | "request" | null;
+    id: string | null;
+    message: string;
+  }>({ isOpen: false, type: null, id: null, message: "" });
+
   const {
     data: responses,
     isLoading,
@@ -72,6 +110,49 @@ export function BudgetResponsesManager() {
     queryKey: ["budgetResponses"],
     queryFn: fetchBudgetResponses,
   });
+
+  const deleteResponseMutation = useMutation({
+    mutationFn: deleteBudgetResponse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgetResponses"] });
+      showSuccess("Resposta de orçamento removida com sucesso!");
+      setDialogState({ isOpen: false, type: null, id: null, message: "" });
+    },
+    onError: (error) => {
+      showError(`Erro ao remover: ${error.message}`);
+    },
+  });
+
+  const deleteRequestMutation = useMutation({
+    mutationFn: deleteBudgetRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgetResponses"] });
+      showSuccess(
+        "Solicitação e suas respostas foram removidas com sucesso!"
+      );
+      setDialogState({ isOpen: false, type: null, id: null, message: "" });
+    },
+    onError: (error) => {
+      showError(`Erro ao remover: ${error.message}`);
+    },
+  });
+
+  const handleDeleteClick = (type: "response" | "request", id: string) => {
+    const message =
+      type === "response"
+        ? "Tem certeza que deseja apagar esta resposta de orçamento? Esta ação não pode ser desfeita."
+        : "Tem certeza que deseja apagar esta solicitação e todas as suas respostas? Esta ação não pode ser desfeita.";
+    setDialogState({ isOpen: true, type, id, message });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!dialogState.type || !dialogState.id) return;
+    if (dialogState.type === "response") {
+      deleteResponseMutation.mutate(dialogState.id);
+    } else {
+      deleteRequestMutation.mutate(dialogState.id);
+    }
+  };
 
   const groupedResponses = useMemo(() => {
     if (!responses) return {};
@@ -130,12 +211,25 @@ export function BudgetResponsesManager() {
               className="border rounded-lg"
             >
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold text-lg">{carKey}</span>
-                  <Badge variant="secondary">
-                    {carResponses.length}{" "}
-                    {carResponses.length > 1 ? "respostas" : "resposta"}
-                  </Badge>
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-4">
+                    <span className="font-semibold text-lg">{carKey}</span>
+                    <Badge variant="secondary">
+                      {carResponses.length}{" "}
+                      {carResponses.length > 1 ? "respostas" : "resposta"}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive mr-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick("request", carResponses[0].request_id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-4 space-y-2 bg-muted/20">
@@ -172,7 +266,9 @@ export function BudgetResponsesManager() {
                         <TableBody>
                           {response.parts_and_prices.map((item, index) => (
                             <TableRow key={index}>
-                              <TableCell className="py-1.5 text-sm">{item.part}</TableCell>
+                              <TableCell className="py-1.5 text-sm">
+                                {item.part}
+                              </TableCell>
                               <TableCell className="py-1.5 text-sm text-right">
                                 {item.price.toLocaleString("pt-BR", {
                                   style: "currency",
@@ -200,20 +296,37 @@ export function BudgetResponsesManager() {
                           currency: "BRL",
                         })}
                       </div>
-                      <Button asChild size="sm" variant="outline" className="h-8">
-                        <a
-                          href={`https://wa.me/${response.shop_whatsapp.replace(
-                            /\D/g,
-                            ""
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs"
+                      <div className="flex items-center gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
                         >
-                          <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                          Contatar
-                        </a>
-                      </Button>
+                          <a
+                            href={`https://wa.me/${response.shop_whatsapp.replace(
+                              /\D/g,
+                              ""
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                            Contatar
+                          </a>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() =>
+                            handleDeleteClick("response", response.id)
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardFooter>
                   </Card>
                 ))}
@@ -222,6 +335,41 @@ export function BudgetResponsesManager() {
           ))}
         </Accordion>
       )}
+      <AlertDialog
+        open={dialogState.isOpen}
+        onOpenChange={(isOpen) => setDialogState((prev) => ({ ...prev, isOpen }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              {dialogState.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() =>
+                setDialogState({ isOpen: false, type: null, id: null, message: "" })
+              }
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={
+                deleteResponseMutation.isPending ||
+                deleteRequestMutation.isPending
+              }
+            >
+              {deleteResponseMutation.isPending ||
+              deleteRequestMutation.isPending
+                ? "Apagando..."
+                : "Apagar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
