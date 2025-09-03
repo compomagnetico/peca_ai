@@ -35,20 +35,28 @@ type BudgetResponse = {
   created_at: string;
   shop_name: string;
   shop_whatsapp: string;
-  car_model: string;
-  car_year: string;
   parts_and_prices: { part: string; price: number }[];
   total_price: number;
   notes?: string;
+  budget_requests: {
+    car_model: string;
+    car_year: string;
+  } | null;
 };
 
 const fetchBudgetResponses = async (): Promise<BudgetResponse[]> => {
   const { data, error } = await supabase
     .from("budget_responses")
-    .select("*")
+    .select(`
+      *,
+      budget_requests (
+        car_model,
+        car_year
+      )
+    `)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data;
+  return data as BudgetResponse[];
 };
 
 export function BudgetResponsesManager() {
@@ -64,7 +72,9 @@ export function BudgetResponsesManager() {
   const groupedResponses = useMemo(() => {
     if (!responses) return {};
     return responses.reduce((acc, response) => {
-      const key = `${response.car_model} - ${response.car_year}`;
+      const carModel = response.budget_requests?.car_model ?? "Desconhecido";
+      const carYear = response.budget_requests?.car_year ?? "";
+      const key = `${carModel} - ${carYear}`;
       if (!acc[key]) {
         acc[key] = [];
       }
