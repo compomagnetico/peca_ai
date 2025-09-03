@@ -6,8 +6,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
-  { name: "Respostas", href: "/budget-responses", icon: Inbox },
-  { name: "Gerenciar Autopeças", href: "/auto-parts", icon: Car },
+  { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
+  { name: "Auto Peças", href: "/auto-parts", icon: Car },
   { name: "Perfil", href: "/profile", icon: User },
 ];
 
