@@ -25,10 +25,12 @@ export function Header() {
           <nav className="grid gap-2 text-lg font-medium">
             <NavLink
               to="/"
-              className="flex items-center gap-2 text-lg font-semibold mb-4"
+              className="flex items-center gap-2 mb-4"
             >
-              <Car className="h-6 w-6" />
-              <span>AutoManager</span>
+              <Car className="h-6 w-6 text-primary" />
+              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
+                Peça AI
+              </span>
             </NavLink>
             {navigation.map((item) => (
               <NavLink
