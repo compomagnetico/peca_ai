@@ -138,11 +138,11 @@ export function BudgetResponsesManager() {
                   </Badge>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="p-4 space-y-4 bg-muted/20">
+              <AccordionContent className="p-4 space-y-2 bg-muted/20">
                 {carResponses.map((response) => (
                   <Card key={response.id} className="overflow-hidden">
-                    <CardHeader className="p-4 pb-2 bg-muted/40">
-                      <CardTitle className="text-base font-semibold">
+                    <CardHeader className="p-3 pb-1 bg-muted/40">
+                      <CardTitle className="text-sm font-semibold">
                         Orçamento de: {response.shop_name}
                       </CardTitle>
                       <CardDescription className="text-xs">
@@ -156,15 +156,12 @@ export function BudgetResponsesManager() {
                         )}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <h4 className="text-sm font-medium mb-2">
-                        Peças e Preços
-                      </h4>
+                    <CardContent className="p-3">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="h-10">Peça</TableHead>
-                            <TableHead className="h-10 text-right">
+                            <TableHead className="h-8">Peça</TableHead>
+                            <TableHead className="h-8 text-right">
                               Preço
                             </TableHead>
                           </TableRow>
@@ -172,8 +169,8 @@ export function BudgetResponsesManager() {
                         <TableBody>
                           {response.parts_and_prices.map((item, index) => (
                             <TableRow key={index}>
-                              <TableCell className="py-2">{item.part}</TableCell>
-                              <TableCell className="py-2 text-right">
+                              <TableCell className="py-1.5">{item.part}</TableCell>
+                              <TableCell className="py-1.5 text-right">
                                 {item.price.toLocaleString("pt-BR", {
                                   style: "currency",
                                   currency: "BRL",
@@ -184,16 +181,16 @@ export function BudgetResponsesManager() {
                         </TableBody>
                       </Table>
                       {response.notes && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium">Observações</h4>
-                          <p className="text-xs text-muted-foreground pt-1">
+                        <div className="mt-2">
+                          <h4 className="text-xs font-medium">Observações</h4>
+                          <p className="text-xs text-muted-foreground pt-0.5">
                             {response.notes}
                           </p>
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center bg-muted/40 p-3">
-                      <div className="font-semibold text-base">
+                    <CardFooter className="flex justify-between items-center bg-muted/40 p-2">
+                      <div className="font-semibold text-sm">
                         Total:{" "}
                         {response.total_price.toLocaleString("pt-BR", {
                           style: "currency",
