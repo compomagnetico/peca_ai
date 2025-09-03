@@ -138,30 +138,29 @@ export function BudgetResponsesManager() {
                   </Badge>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="p-4 space-y-2 bg-muted/20">
+              <AccordionContent className="p-4 space-y-1.5 bg-muted/20">
                 {carResponses.map((response) => (
                   <Card key={response.id} className="overflow-hidden">
-                    <CardHeader className="p-3 pb-1 bg-muted/40">
+                    <CardHeader className="p-2 bg-muted/40">
                       <CardTitle className="text-sm font-semibold">
-                        Orçamento de: {response.shop_name}
+                        {response.shop_name}
                       </CardTitle>
                       <CardDescription className="text-xs">
-                        Recebido em:{" "}
                         {format(
                           new Date(response.created_at),
-                          "dd/MM/yyyy 'às' HH:mm",
+                          "dd/MM/yy HH:mm",
                           {
                             locale: ptBR,
                           }
                         )}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-3">
+                    <CardContent className="p-2">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="h-8">Peça</TableHead>
-                            <TableHead className="h-8 text-right">
+                            <TableHead className="h-auto py-1">Peça</TableHead>
+                            <TableHead className="h-auto py-1 text-right">
                               Preço
                             </TableHead>
                           </TableRow>
@@ -169,8 +168,8 @@ export function BudgetResponsesManager() {
                         <TableBody>
                           {response.parts_and_prices.map((item, index) => (
                             <TableRow key={index}>
-                              <TableCell className="py-1.5">{item.part}</TableCell>
-                              <TableCell className="py-1.5 text-right">
+                              <TableCell className="py-1 text-xs">{item.part}</TableCell>
+                              <TableCell className="py-1 text-xs text-right">
                                 {item.price.toLocaleString("pt-BR", {
                                   style: "currency",
                                   currency: "BRL",
@@ -181,8 +180,8 @@ export function BudgetResponsesManager() {
                         </TableBody>
                       </Table>
                       {response.notes && (
-                        <div className="mt-2">
-                          <h4 className="text-xs font-medium">Observações</h4>
+                        <div className="mt-1.5">
+                          <h4 className="text-xs font-medium">Obs:</h4>
                           <p className="text-xs text-muted-foreground pt-0.5">
                             {response.notes}
                           </p>
@@ -197,7 +196,7 @@ export function BudgetResponsesManager() {
                           currency: "BRL",
                         })}
                       </div>
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild size="sm" variant="outline" className="h-8 px-2">
                         <a
                           href={`https://wa.me/${response.shop_whatsapp.replace(
                             /\D/g,
@@ -205,9 +204,9 @@ export function BudgetResponsesManager() {
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm"
+                          className="text-xs"
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
+                          <MessageSquare className="h-3 w-3 mr-1.5" />
                           Contatar
                         </a>
                       </Button>
