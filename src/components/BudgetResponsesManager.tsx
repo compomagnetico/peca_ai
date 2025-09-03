@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
+import { RefreshCw, MessageSquare, Trash2, CheckCircle } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 
 type BudgetResponse = {
@@ -55,6 +55,7 @@ type BudgetResponse = {
   budget_requests: {
     car_model: string;
     car_year: string;
+    status: string;
   } | null;
 };
 
@@ -66,7 +67,8 @@ const fetchBudgetResponses = async (): Promise<BudgetResponse[]> => {
       *,
       budget_requests (
         car_model,
-        car_year
+        car_year,
+        status
       )
     `
     )
@@ -87,6 +89,20 @@ const deleteBudgetRequest = async (requestId: string) => {
   const { error } = await supabase
     .from("budget_requests")
     .delete()
+    .eq("id", requestId);
+  if (error) throw new Error(error.message);
+};
+
+const updateBudgetRequestStatus = async ({
+  requestId,
+  status,
+}: {
+  requestId: string;
+  status: string;
+}) => {
+  const { error } = await supabase
+    .from("budget_requests")
+    .update({ status })
     .eq("id", requestId);
   if (error) throw new Error(error.message);
 };
@@ -134,6 +150,17 @@ export function BudgetResponsesManager() {
     },
     onError: (error) => {
       showError(`Erro ao remover: ${error.message}`);
+    },
+  });
+
+  const updateRequestStatusMutation = useMutation({
+    mutationFn: updateBudgetRequestStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["budgetResponses"] });
+      showSuccess("Orçamento marcado como finalizado!");
+    },
+    onError: (error) => {
+      showError(`Erro ao atualizar status: ${error.message}`);
     },
   });
 
@@ -218,18 +245,44 @@ export function BudgetResponsesManager() {
                       {carResponses.length}{" "}
                       {carResponses.length > 1 ? "respostas" : "resposta"}
                     </Badge>
+                    {carResponses[0]?.budget_requests?.status ===
+                      "completed" && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
+                        Finalizado
+                      </Badge>
+                    )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive mr-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteClick("request", carResponses[0].request_id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {carResponses[0]?.budget_requests?.status !==
+                      "completed" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-green-100 text-muted-foreground hover:text-green-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateRequestStatusMutation.mutate({
+                            requestId: carResponses[0].request_id,
+                            status: "completed",
+                          });
+                        }}
+                        disabled={updateRequestStatusMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick("request", carResponses[0].request_id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-4 space-y-2 bg-muted/20">
