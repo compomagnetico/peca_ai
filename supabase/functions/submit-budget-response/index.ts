@@ -29,16 +29,17 @@ serve(async (req) => {
       }
     }
 
-    // 1. Find the shop name
+    // 1. Find the shop id and name
     const { data: shopData, error: shopError } = await supabaseAdmin
       .from('autopecas')
-      .select('nome')
+      .select('id, nome')
       .eq('whatsapp', body.shop_whatsapp)
       .single()
 
     if (shopError || !shopData) {
       throw new Error(`Shop with WhatsApp number ${body.shop_whatsapp} not found.`);
     }
+    const shopId = shopData.id;
     const shopName = shopData.nome;
 
     // 2. Find the original request to get its ID and list of selected shops
@@ -60,6 +61,7 @@ serve(async (req) => {
       .insert([
         {
           request_id: requestId,
+          shop_id: shopId,
           shop_name: shopName,
           shop_whatsapp: body.shop_whatsapp,
           parts_and_prices: body.parts_and_prices,
