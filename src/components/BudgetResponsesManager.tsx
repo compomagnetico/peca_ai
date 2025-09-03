@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { RefreshCw, MessageSquare, Trash2, CheckCircle } from "lucide-react";
+import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 
 type BudgetRequest = {
@@ -51,6 +51,7 @@ type BudgetRequest = {
   status: "pending" | "answered" | "completed";
   selected_shops_ids: string[];
   short_id: number;
+  parts: string[];
 };
 
 type AutoPeca = {
@@ -105,20 +106,6 @@ const deleteBudgetRequest = async (requestId: string) => {
   if (error) throw new Error(error.message);
 };
 
-const updateBudgetRequestStatus = async ({
-  requestId,
-  status,
-}: {
-  requestId: string;
-  status: string;
-}) => {
-  const { error } = await supabase
-    .from("budget_requests")
-    .update({ status })
-    .eq("id", requestId);
-  if (error) throw new Error(error.message);
-};
-
 export function BudgetResponsesManager() {
   const queryClient = useQueryClient();
   const [dialogState, setDialogState] = useState<{
@@ -149,17 +136,6 @@ export function BudgetResponsesManager() {
     },
     onError: (error) => {
       showError(`Erro ao remover: ${error.message}`);
-    },
-  });
-
-  const updateRequestStatusMutation = useMutation({
-    mutationFn: updateBudgetRequestStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgetRequestsAndResponses"] });
-      showSuccess("Orçamento marcado como finalizado!");
-    },
-    onError: (error) => {
-      showError(`Erro ao atualizar status: ${error.message}`);
     },
   });
 
@@ -253,23 +229,6 @@ export function BudgetResponsesManager() {
                       {statusBadge[request.status]}
                     </div>
                     <div className="flex items-center gap-1">
-                      {request.status !== "completed" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full hover:bg-green-100 text-muted-foreground hover:text-green-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateRequestStatusMutation.mutate({
-                              requestId: request.id,
-                              status: "completed",
-                            });
-                          }}
-                          disabled={updateRequestStatusMutation.isPending}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -284,7 +243,15 @@ export function BudgetResponsesManager() {
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-4 space-y-2 bg-muted/20">
+                <AccordionContent className="p-4 space-y-4 bg-muted/20">
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Peças Solicitadas:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(request.parts || []).map((part, index) => (
+                        <Badge key={index} variant="secondary">{part}</Badge>
+                      ))}
+                    </div>
+                  </div>
                   {(request.selected_shops_ids || []).map((shopId) => {
                     const shopName =
                       shopsMap.get(shopId) || "Autopeça Desconhecida";
