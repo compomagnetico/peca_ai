@@ -141,8 +141,8 @@ export function BudgetResponsesManager() {
               <AccordionContent className="p-4 space-y-2 bg-muted/20">
                 {carResponses.map((response) => (
                   <Card key={response.id} className="overflow-hidden">
-                    <CardHeader className="p-4 pb-2 bg-muted/40">
-                      <CardTitle className="text-base font-semibold">
+                    <CardHeader className="p-3 pb-2 bg-muted/40">
+                      <CardTitle className="text-sm font-semibold">
                         Orçamento de: {response.shop_name}
                       </CardTitle>
                       <CardDescription className="text-xs">
@@ -156,15 +156,15 @@ export function BudgetResponsesManager() {
                         )}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <h4 className="text-sm font-medium mb-2">
+                    <CardContent className="p-3">
+                      <h4 className="text-xs font-medium mb-1.5">
                         Peças e Preços
                       </h4>
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="h-10">Peça</TableHead>
-                            <TableHead className="h-10 text-right">
+                            <TableHead className="h-8">Peça</TableHead>
+                            <TableHead className="h-8 text-right">
                               Preço
                             </TableHead>
                           </TableRow>
@@ -172,8 +172,8 @@ export function BudgetResponsesManager() {
                         <TableBody>
                           {response.parts_and_prices.map((item, index) => (
                             <TableRow key={index}>
-                              <TableCell className="py-2">{item.part}</TableCell>
-                              <TableCell className="py-2 text-right">
+                              <TableCell className="py-1.5 text-sm">{item.part}</TableCell>
+                              <TableCell className="py-1.5 text-sm text-right">
                                 {item.price.toLocaleString("pt-BR", {
                                   style: "currency",
                                   currency: "BRL",
@@ -184,23 +184,23 @@ export function BudgetResponsesManager() {
                         </TableBody>
                       </Table>
                       {response.notes && (
-                        <div className="mt-3">
-                          <h4 className="text-sm font-medium">Observações</h4>
-                          <p className="text-xs text-muted-foreground pt-1">
+                        <div className="mt-2">
+                          <h4 className="text-xs font-medium">Observações</h4>
+                          <p className="text-xs text-muted-foreground pt-0.5">
                             {response.notes}
                           </p>
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center bg-muted/40 p-3">
-                      <div className="font-semibold text-base">
+                    <CardFooter className="flex justify-between items-center bg-muted/40 p-2.5">
+                      <div className="font-semibold text-sm">
                         Total:{" "}
                         {response.total_price.toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </div>
-                      <Button asChild size="sm" variant="outline">
+                      <Button asChild size="sm" variant="outline" className="h-8">
                         <a
                           href={`https://wa.me/${response.shop_whatsapp.replace(
                             /\D/g,
@@ -208,9 +208,9 @@ export function BudgetResponsesManager() {
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm"
+                          className="text-xs"
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
+                          <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
                           Contatar
                         </a>
                       </Button>
