@@ -30,7 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo } from "react";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, MessageSquare } from "lucide-react";
 
 type BudgetResponse = {
   id: string;
@@ -140,10 +140,12 @@ export function BudgetResponsesManager() {
               </AccordionTrigger>
               <AccordionContent className="p-4 space-y-4 bg-muted/20">
                 {carResponses.map((response) => (
-                  <Card key={response.id}>
-                    <CardHeader>
-                      <CardTitle>Orçamento de: {response.shop_name}</CardTitle>
-                      <CardDescription>
+                  <Card key={response.id} className="overflow-hidden">
+                    <CardHeader className="p-4 pb-2 bg-muted/40">
+                      <CardTitle className="text-base font-semibold">
+                        Orçamento de: {response.shop_name}
+                      </CardTitle>
+                      <CardDescription className="text-xs">
                         Recebido em:{" "}
                         {format(
                           new Date(response.created_at),
@@ -154,20 +156,24 @@ export function BudgetResponsesManager() {
                         )}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <h4 className="font-semibold mb-2">Peças e Preços</h4>
+                    <CardContent className="p-4">
+                      <h4 className="text-sm font-medium mb-2">
+                        Peças e Preços
+                      </h4>
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Peça</TableHead>
-                            <TableHead className="text-right">Preço</TableHead>
+                            <TableHead className="h-10">Peça</TableHead>
+                            <TableHead className="h-10 text-right">
+                              Preço
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {response.parts_and_prices.map((item, index) => (
                             <TableRow key={index}>
-                              <TableCell>{item.part}</TableCell>
-                              <TableCell className="text-right">
+                              <TableCell className="py-2">{item.part}</TableCell>
+                              <TableCell className="py-2 text-right">
                                 {item.price.toLocaleString("pt-BR", {
                                   style: "currency",
                                   currency: "BRL",
@@ -178,33 +184,36 @@ export function BudgetResponsesManager() {
                         </TableBody>
                       </Table>
                       {response.notes && (
-                        <div className="mt-4">
-                          <h4 className="font-semibold">Observações</h4>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="mt-3">
+                          <h4 className="text-sm font-medium">Observações</h4>
+                          <p className="text-xs text-muted-foreground pt-1">
                             {response.notes}
                           </p>
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-between items-center bg-muted/40 p-4">
-                      <div className="font-bold text-lg">
+                    <CardFooter className="flex justify-between items-center bg-muted/40 p-3">
+                      <div className="font-semibold text-base">
                         Total:{" "}
                         {response.total_price.toLocaleString("pt-BR", {
                           style: "currency",
                           currency: "BRL",
                         })}
                       </div>
-                      <a
-                        href={`https://wa.me/${response.shop_whatsapp.replace(
-                          /\D/g,
-                          ""
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-green-600 hover:underline"
-                      >
-                        Contatar via WhatsApp
-                      </a>
+                      <Button asChild size="sm" variant="outline">
+                        <a
+                          href={`https://wa.me/${response.shop_whatsapp.replace(
+                            /\D/g,
+                            ""
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Contatar
+                        </a>
+                      </Button>
                     </CardFooter>
                   </Card>
                 ))}
