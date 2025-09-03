@@ -19,8 +19,8 @@ serve(async (req) => {
 
     const body = await req.json()
 
-    // Validate required fields, now using short_id
-    const requiredFields = ['short_id', 'shop_name', 'shop_whatsapp', 'car_model', 'car_year', 'parts_and_prices', 'total_price'];
+    // Validate required fields (further simplified)
+    const requiredFields = ['short_id', 'shop_whatsapp', 'parts_and_prices', 'total_price'];
     for (const field of requiredFields) {
       if (!(field in body)) {
         return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
@@ -30,26 +30,38 @@ serve(async (req) => {
       }
     }
 
-    // 1. Find the original request using the short_id
+    // 1. Find the shop name using the provided WhatsApp number
+    const { data: shopData, error: shopError } = await supabaseAdmin
+      .from('autopecas')
+      .select('nome')
+      .eq('whatsapp', body.shop_whatsapp)
+      .single()
+
+    if (shopError || !shopData) {
+      throw new Error(`Shop with WhatsApp number ${body.shop_whatsapp} not found.`);
+    }
+    const shopName = shopData.nome;
+
+    // 2. Find the original request using the short_id
     const { data: requestData, error: requestError } = await supabaseAdmin
       .from('budget_requests')
       .select('id')
       .eq('short_id', body.short_id)
       .single()
 
-    if (requestError) throw new Error(`Request with short_id ${body.short_id} not found.`);
+    if (requestError) {
+        throw new Error(`Request with short_id ${body.short_id} not found.`);
+    }
     const requestId = requestData.id;
 
-    // 2. Insert the new budget response with the correct UUID request_id
+    // 3. Insert the new budget response with the looked-up shop name
     const { data, error } = await supabaseAdmin
       .from('budget_responses')
       .insert([
         {
           request_id: requestId,
-          shop_name: body.shop_name,
+          shop_name: shopName, // Use the name we found
           shop_whatsapp: body.shop_whatsapp,
-          car_model: body.car_model,
-          car_year: body.car_year,
           parts_and_prices: body.parts_and_prices,
           total_price: body.total_price,
           notes: body.notes,
@@ -61,7 +73,7 @@ serve(async (req) => {
       throw error
     }
 
-    // 3. Optionally, update the status of the original request
+    // 4. Optionally, update the status of the original request
     await supabaseAdmin
       .from('budget_requests')
       .update({ status: 'answered' })
