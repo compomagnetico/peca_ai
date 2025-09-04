@@ -272,82 +272,78 @@ export function BudgetResponsesManager() {
                       </p>
                     </div>
                   )}
-                  {(request.selected_shops_ids || []).map((shopId) => {
-                    const shopName =
-                      shopsMap.get(shopId) || "Autopeça Desconhecida";
-                    const response = responsesForThisRequest.find(
-                      (r) => r.shop_id === shopId
-                    );
 
-                    if (response) {
-                      return (
-                        <Card key={response.id} className="overflow-hidden">
-                          <CardHeader className="p-3 pb-2 bg-muted/40 flex flex-row items-center justify-between">
-                            <div>
-                              <CardTitle className="text-sm font-semibold">
-                                {response.shop_name}
-                              </CardTitle>
-                              <CardDescription className="text-xs">
-                                Respondido em:{" "}
-                                {format(
-                                  new Date(response.created_at),
-                                  "dd/MM/yyyy 'às' HH:mm",
-                                  { locale: ptBR }
+                  <div className="space-y-2 mt-4">
+                    <h4 className="text-sm font-semibold">Respostas das Autopeças:</h4>
+                    <Accordion type="multiple" className="w-full">
+                      {(request.selected_shops_ids || []).map((shopId) => {
+                        const shopName =
+                          shopsMap.get(shopId) || "Autopeça Desconhecida";
+                        const response = responsesForThisRequest.find(
+                          (r) => r.shop_id === shopId
+                        );
+
+                        if (response) {
+                          return (
+                            <AccordionItem value={response.id} key={response.id} className="border rounded-lg mb-2">
+                              <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/40">
+                                <div className="flex items-center justify-between w-full">
+                                  <span className="font-semibold text-sm">{response.shop_name}</span>
+                                  <Badge className="bg-green-500 text-white">Respondido</Badge>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="p-3 bg-background">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead className="h-8">Peça</TableHead>
+                                      <TableHead className="h-8 text-right">Preço</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {response.parts_and_prices.map((item, index) => (
+                                      <TableRow key={index}>
+                                        <TableCell className="py-1.5 text-sm">{item.part}</TableCell>
+                                        <TableCell className="py-1.5 text-sm text-right">
+                                          {item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                                {response.notes && (
+                                  <div className="mt-2">
+                                    <h4 className="text-xs font-medium">Observações da Resposta</h4>
+                                    <p className="text-xs text-muted-foreground pt-0.5">{response.notes}</p>
+                                  </div>
                                 )}
-                              </CardDescription>
-                            </div>
-                            <Badge className="bg-green-500 text-white">Respondido</Badge>
-                          </CardHeader>
-                          <CardContent className="p-3">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="h-8">Peça</TableHead>
-                                  <TableHead className="h-8 text-right">Preço</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {response.parts_and_prices.map((item, index) => (
-                                  <TableRow key={index}>
-                                    <TableCell className="py-1.5 text-sm">{item.part}</TableCell>
-                                    <TableCell className="py-1.5 text-sm text-right">
-                                      {item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                            {response.notes && (
-                              <div className="mt-2">
-                                <h4 className="text-xs font-medium">Observações</h4>
-                                <p className="text-xs text-muted-foreground pt-0.5">{response.notes}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                          <CardFooter className="flex justify-between items-center bg-muted/40 p-2.5">
-                            <div className="font-semibold text-sm">
-                              Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                            </div>
-                            <Button asChild size="sm" variant="outline" className="h-8">
-                              <a href={`https://wa.me/${response.shop_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs">
-                                <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                                Contatar
-                              </a>
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      );
-                    } else {
-                      return (
-                        <Card key={shopId} className="bg-white">
-                          <CardHeader className="p-3 flex flex-row items-center justify-between">
-                            <CardTitle className="text-sm font-semibold">{shopName}</CardTitle>
-                            <Badge variant="outline">Pendente</Badge>
-                          </CardHeader>
-                        </Card>
-                      );
-                    }
-                  })}
+                                <CardFooter className="flex justify-between items-center bg-muted/40 p-2.5 mt-3 -mx-3 -mb-3 rounded-b-lg">
+                                  <div className="font-semibold text-sm">
+                                    Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                  </div>
+                                  <Button asChild size="sm" variant="outline" className="h-8">
+                                    <a href={`https://wa.me/${response.shop_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs">
+                                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                                      Contatar
+                                    </a>
+                                  </Button>
+                                </CardFooter>
+                              </AccordionContent>
+                            </AccordionItem>
+                          );
+                        } else {
+                          return (
+                            <Card key={shopId} className="bg-white mb-2">
+                              <CardHeader className="p-3 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-semibold">{shopName}</CardTitle>
+                                <Badge variant="outline">Pendente</Badge>
+                              </CardHeader>
+                            </Card>
+                          );
+                        }
+                      })}
+                    </Accordion>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             );
