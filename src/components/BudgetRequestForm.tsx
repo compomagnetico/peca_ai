@@ -37,6 +37,7 @@ const formSchema = z.object({
   })).min(1, "Adicione pelo menos uma peça."),
   carModel: z.string().min(1, "Modelo do carro é obrigatório."),
   carYear: z.string().min(1, "Ano do carro é obrigatório."),
+  carEngine: z.string().optional(), // Novo campo de motorização
 });
 
 type AutoPart = {
@@ -69,6 +70,7 @@ export function BudgetRequestForm() {
       parts: [{ name: "", brand: "", partCode: "" }],
       carModel: "",
       carYear: "",
+      carEngine: "", // Valor padrão para o novo campo
     },
   });
 
@@ -109,6 +111,7 @@ export function BudgetRequestForm() {
         .insert({
           car_model: values.carModel,
           car_year: values.carYear,
+          car_engine: values.carEngine, // Incluindo a motorização
           parts: values.parts,
           selected_shops_ids: selectedShops, // Save selected shop IDs
         })
@@ -129,6 +132,7 @@ export function BudgetRequestForm() {
           parts: values.parts,
           carModel: values.carModel,
           carYear: values.carYear,
+          carEngine: values.carEngine, // Incluindo a motorização no webhook
         },
         selectedShops: selectedShopsDetails,
       };
@@ -168,7 +172,9 @@ export function BudgetRequestForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Seção de Detalhes do Carro */}
             <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Detalhes do Carro</h3>
               <FormField
                 control={form.control}
                 name="carModel"
@@ -195,10 +201,24 @@ export function BudgetRequestForm() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="carEngine"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Motorização do Carro (Opcional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: 1.0 Fire, 2.0 Turbo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
+            {/* Seção de Peças Necessárias */}
             <div className="space-y-4">
-              <FormLabel>Peças Necessárias</FormLabel>
+              <h3 className="text-lg font-semibold">Peças Necessárias</h3>
               {fields.map((field, index) => (
                 <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
                   <div className="flex justify-between items-center">
@@ -235,7 +255,7 @@ export function BudgetRequestForm() {
                       name={`parts.${index}.brand`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Marca</FormLabel>
+                          <FormLabel className="text-xs">Marca (Opcional)</FormLabel>
                           <FormControl>
                             <Input placeholder="Ex: Cofap" {...field} />
                           </FormControl>
@@ -248,7 +268,7 @@ export function BudgetRequestForm() {
                       name={`parts.${index}.partCode`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Código</FormLabel>
+                          <FormLabel className="text-xs">Código (Opcional)</FormLabel>
                           <FormControl>
                             <Input placeholder="Ex: GP30114" {...field} />
                           </FormControl>
@@ -271,8 +291,10 @@ export function BudgetRequestForm() {
               </Button>
             </div>
 
+            {/* Seção de Enviar para Autopeças */}
             <div>
-              <FormLabel>Enviar para Autopeças</FormLabel>
+              <h3 className="text-lg font-semibold mb-2">Enviar para Autopeças</h3>
+              <FormLabel>Selecione as autopeças para enviar o orçamento:</FormLabel>
               {isLoading ? (
                  <div className="space-y-2 mt-2">
                     <Skeleton className="h-6 w-full" />

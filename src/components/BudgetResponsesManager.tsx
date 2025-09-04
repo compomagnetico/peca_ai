@@ -48,6 +48,7 @@ type BudgetRequest = {
   created_at: string;
   car_model: string;
   car_year: string;
+  car_engine?: string; // Adicionado campo de motorização
   status: "pending" | "answered" | "completed";
   selected_shops_ids: string[];
   short_id: number;
@@ -225,6 +226,7 @@ export function BudgetResponsesManager() {
                     <div className="flex items-center gap-4">
                       <span className="font-semibold text-lg">
                         {`#${request.short_id} - ${request.car_model} ${request.car_year}`}
+                        {request.car_engine && ` (${request.car_engine})`} {/* Exibindo a motorização */}
                       </span>
                       {statusBadge[request.status]}
                     </div>
