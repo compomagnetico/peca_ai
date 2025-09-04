@@ -51,7 +51,7 @@ type BudgetRequest = {
   status: "pending" | "answered" | "completed";
   selected_shops_ids: string[];
   short_id: number;
-  parts: string[];
+  parts: { name: string; brand?: string; partCode?: string }[];
 };
 
 type AutoPeca = {
@@ -246,9 +246,18 @@ export function BudgetResponsesManager() {
                 <AccordionContent className="p-4 space-y-4 bg-muted/20">
                   <div>
                     <h4 className="text-sm font-semibold mb-2">Peças Solicitadas:</h4>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-2">
                       {(request.parts || []).map((part, index) => (
-                        <Badge key={index} variant="secondary">{part}</Badge>
+                        <div key={index} className="text-sm p-2 bg-background rounded-md border">
+                          <p className="font-medium">{part.name}</p>
+                          {(part.brand || part.partCode) && (
+                            <p className="text-xs text-muted-foreground">
+                              {part.brand && `Marca: ${part.brand}`}
+                              {part.brand && part.partCode && " | "}
+                              {part.partCode && `Código: ${part.partCode}`}
+                            </p>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>

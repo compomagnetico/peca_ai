@@ -32,6 +32,8 @@ import { PlusCircle, Trash2 } from "lucide-react";
 const formSchema = z.object({
   parts: z.array(z.object({
     name: z.string().min(1, "Nome da peça é obrigatório."),
+    brand: z.string().optional(),
+    partCode: z.string().optional(),
   })).min(1, "Adicione pelo menos uma peça."),
   carModel: z.string().min(1, "Modelo do carro é obrigatório."),
   carYear: z.string().min(1, "Ano do carro é obrigatório."),
@@ -64,7 +66,7 @@ export function BudgetRequestForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      parts: [{ name: "" }],
+      parts: [{ name: "", brand: "", partCode: "" }],
       carModel: "",
       carYear: "",
     },
@@ -107,7 +109,7 @@ export function BudgetRequestForm() {
         .insert({
           car_model: values.carModel,
           car_year: values.carYear,
-          parts: values.parts.map(p => p.name),
+          parts: values.parts,
           selected_shops_ids: selectedShops, // Save selected shop IDs
         })
         .select("short_id")
@@ -124,7 +126,7 @@ export function BudgetRequestForm() {
       const payload = {
         short_id: shortId,
         partDetails: {
-          parts: values.parts.map(p => p.name),
+          parts: values.parts,
           carModel: values.carModel,
           carYear: values.carYear,
         },
@@ -198,38 +200,71 @@ export function BudgetRequestForm() {
             <div className="space-y-4">
               <FormLabel>Peças Necessárias</FormLabel>
               {fields.map((field, index) => (
-                <FormField
-                  key={field.id}
-                  control={form.control}
-                  name={`parts.${index}.name`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-2">
-                        <FormControl>
-                          <Input placeholder={`Peça ${index + 1}`} {...field} />
-                        </FormControl>
-                        {fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => remove(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
+                  <div className="flex justify-between items-center">
+                    <FormLabel className="font-semibold">Peça {index + 1}</FormLabel>
+                    {fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remover Peça</span>
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name={`parts.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-3">
+                          <FormLabel className="text-xs">Nome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Amortecedor dianteiro" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`parts.${index}.brand`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Marca</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Cofap" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`parts.${index}.partCode`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Código</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: GP30114" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
               ))}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="mt-2"
-                onClick={() => append({ name: "" })}
+                onClick={() => append({ name: "", brand: "", partCode: "" })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Peça
