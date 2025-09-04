@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Car, FileText, User, Inbox } from "lucide-react";
+import { Home, Car, FileText, User, Inbox, BrainCircuit } from "lucide-react"; // Importar BrainCircuit
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -7,6 +7,7 @@ const navigation = [
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
   { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
   { name: "Auto Peças", href: "/auto-parts", icon: Car },
+  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit }, // Novo item de navegação
   { name: "Perfil", href: "/profile", icon: User },
 ];
 
