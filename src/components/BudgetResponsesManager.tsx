@@ -353,6 +353,29 @@ export function BudgetResponsesManager() {
             );
           })}
         </Accordion>
+      )}
+      <AlertDialog
+        open={dialogState.isOpen}
+        onOpenChange={(isOpen) => setDialogState((prev) => ({ ...prev, isOpen }))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>{dialogState.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogState({ isOpen: false, id: null, message: "" })}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteRequestMutation.isPending}
+            >
+              {deleteRequestMutation.isPending ? "Apagando..." : "Apagar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );
