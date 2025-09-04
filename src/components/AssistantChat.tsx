@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, BrainCircuit, User } from "lucide-react";
 import { showError, showLoading, dismissToast } from "@/utils/toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type Message = {
   type: "user" | "ai";
