@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, Car, Home, FileText, User, Inbox, BrainCircuit } from "lucide-react"; // Importar BrainCircuit
+import { Menu, Car, Home, FileText, User, Inbox, BrainCircuit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -8,14 +9,16 @@ const navigation = [
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
   { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
   { name: "Auto Peças", href: "/auto-parts", icon: Car },
-  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit }, // Novo item de navegação
+  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit },
   { name: "Perfil", href: "/profile", icon: User },
 ];
 
 export function Header() {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-      <Sheet>
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
             <Menu className="h-5 w-5" />
@@ -27,6 +30,7 @@ export function Header() {
             <NavLink
               to="/"
               className="flex items-center gap-2 mb-4"
+              onClick={() => setIsSheetOpen(false)}
             >
               <Car className="h-6 w-6 text-primary" />
               <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
@@ -37,6 +41,7 @@ export function Header() {
               <NavLink
                 key={item.name}
                 to={item.href}
+                onClick={() => setIsSheetOpen(false)}
                 className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
               >
                 <item.icon className="h-5 w-5" />

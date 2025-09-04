@@ -8,7 +8,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // Importar Textarea
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -28,12 +28,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusCircle, Trash2, Info } from "lucide-react"; // Importar Info icon
+import { PlusCircle, Trash2, Info } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Importar Tooltip components
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 
 const formSchema = z.object({
   parts: z.array(z.object({
@@ -44,7 +45,7 @@ const formSchema = z.object({
   carModel: z.string().min(1, "Modelo do carro é obrigatório."),
   carYear: z.string().min(1, "Ano do carro é obrigatório."),
   carEngine: z.string().optional(),
-  notes: z.string().optional(), // Novo campo de observações
+  notes: z.string().optional(),
 });
 
 type AutoPart = {
@@ -78,7 +79,7 @@ export function BudgetRequestForm() {
       carModel: "",
       carYear: "",
       carEngine: "",
-      notes: "", // Valor padrão para o novo campo de observações
+      notes: "",
     },
   });
 
@@ -113,7 +114,6 @@ export function BudgetRequestForm() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Create the budget request with selected shops
       const { data: requestData, error: requestError } = await supabase
         .from("budget_requests")
         .insert({
@@ -122,7 +122,7 @@ export function BudgetRequestForm() {
           car_engine: values.carEngine,
           parts: values.parts,
           selected_shops_ids: selectedShops,
-          notes: values.notes, // Incluindo as observações
+          notes: values.notes,
         })
         .select("short_id")
         .single();
@@ -130,7 +130,6 @@ export function BudgetRequestForm() {
       if (requestError) throw requestError;
       const shortId = requestData.short_id;
 
-      // Step 2: Send the short_id and other details to the webhook
       const selectedShopsDetails = autoParts?.filter((part) =>
         selectedShops.includes(part.id)
       );
@@ -142,7 +141,7 @@ export function BudgetRequestForm() {
           carModel: values.carModel,
           carYear: values.carYear,
           carEngine: values.carEngine,
-          notes: values.notes, // Incluindo as observações no webhook
+          notes: values.notes,
         },
         selectedShops: selectedShopsDetails,
       };
@@ -182,7 +181,6 @@ export function BudgetRequestForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Seção de Detalhes do Carro */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Detalhes do Carro</h3>
               <FormField
@@ -226,7 +224,6 @@ export function BudgetRequestForm() {
               />
             </div>
 
-            {/* Seção de Peças Necessárias */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Peças Necessárias</h3>
               {fields.map((field, index) => (
@@ -301,7 +298,6 @@ export function BudgetRequestForm() {
               </Button>
             </div>
 
-            {/* Novo campo de Observações Gerais */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Observações Gerais (Opcional)</h3>
               <FormField
@@ -311,14 +307,16 @@ export function BudgetRequestForm() {
                   <FormItem>
                     <div className="flex items-center gap-1">
                       <FormLabel>Observações</FormLabel>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p>Adicione qualquer informação adicional relevante para o orçamento, como urgência, detalhes específicos do problema, etc.</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Adicione qualquer informação adicional relevante para o orçamento, como urgência, detalhes específicos do problema, etc.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                     <FormControl>
                       <Textarea
@@ -333,45 +331,45 @@ export function BudgetRequestForm() {
               />
             </div>
 
-            {/* Seção de Enviar para Autopeças */}
             <div>
               <h3 className="text-lg font-semibold mb-2">Enviar para Autopeças</h3>
               <FormLabel>Selecione as autopeças para enviar o orçamento:</FormLabel>
               {isLoading ? (
                  <div className="space-y-2 mt-2">
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
                  </div>
               ) : (
-                <ScrollArea className="h-40 w-full rounded-md border p-4 mt-2">
-                  <div className="flex items-center space-x-2 mb-4">
+                <ScrollArea className="h-40 w-full rounded-md border p-2 mt-2">
+                  <label
+                    htmlFor="select-all"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted cursor-pointer"
+                  >
                     <Checkbox
                       id="select-all"
                       checked={allSelected}
                       onCheckedChange={handleSelectAll}
                     />
-                    <label
-                      htmlFor="select-all"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
+                    <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Marcar/Desmarcar Todos
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                   {autoParts?.map((part) => (
-                    <div key={part.id} className="flex items-center space-x-2 mb-2">
+                    <label
+                      key={part.id}
+                      htmlFor={part.id}
+                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted cursor-pointer"
+                    >
                       <Checkbox
                         id={part.id}
                         checked={selectedShops.includes(part.id)}
                         onCheckedChange={(checked) => handleShopSelect(part.id, !!checked)}
                       />
-                      <label
-                        htmlFor={part.id}
-                        className="text-sm font-medium leading-none"
-                      >
+                      <span className="text-sm font-medium leading-none">
                         {part.nome}
-                      </label>
-                    </div>
+                      </span>
+                    </label>
                   ))}
                 </ScrollArea>
               )}
