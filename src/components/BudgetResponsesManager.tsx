@@ -48,11 +48,12 @@ type BudgetRequest = {
   created_at: string;
   car_model: string;
   car_year: string;
-  car_engine?: string; // Adicionado campo de motorização
+  car_engine?: string;
   status: "pending" | "answered" | "completed";
   selected_shops_ids: string[];
   short_id: number;
   parts: { name: string; brand?: string; partCode?: string }[];
+  notes?: string; // Adicionado campo de observações
 };
 
 type AutoPeca = {
@@ -226,7 +227,7 @@ export function BudgetResponsesManager() {
                     <div className="flex items-center gap-4">
                       <span className="font-semibold text-lg">
                         {`#${request.short_id} - ${request.car_model} ${request.car_year}`}
-                        {request.car_engine && ` (${request.car_engine})`} {/* Exibindo a motorização */}
+                        {request.car_engine && ` (${request.car_engine})`}
                       </span>
                       {statusBadge[request.status]}
                     </div>
@@ -263,6 +264,14 @@ export function BudgetResponsesManager() {
                       ))}
                     </div>
                   </div>
+                  {request.notes && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-semibold mb-2">Observações da Solicitação:</h4>
+                      <p className="text-sm p-2 bg-background rounded-md border text-muted-foreground">
+                        {request.notes}
+                      </p>
+                    </div>
+                  )}
                   {(request.selected_shops_ids || []).map((shopId) => {
                     const shopName =
                       shopsMap.get(shopId) || "Autopeça Desconhecida";
@@ -344,29 +353,6 @@ export function BudgetResponsesManager() {
             );
           })}
         </Accordion>
-      )}
-      <AlertDialog
-        open={dialogState.isOpen}
-        onOpenChange={(isOpen) => setDialogState((prev) => ({ ...prev, isOpen }))}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>{dialogState.message}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogState({ isOpen: false, id: null, message: "" })}>
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deleteRequestMutation.isPending}
-            >
-              {deleteRequestMutation.isPending ? "Apagando..." : "Apagar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
       </AlertDialog>
     </div>
   );

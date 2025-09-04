@@ -8,6 +8,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea"; // Importar Textarea
 import {
   Card,
   CardContent,
@@ -27,7 +28,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Info } from "lucide-react"; // Importar Info icon
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Importar Tooltip components
 
 const formSchema = z.object({
   parts: z.array(z.object({
@@ -37,7 +43,8 @@ const formSchema = z.object({
   })).min(1, "Adicione pelo menos uma peça."),
   carModel: z.string().min(1, "Modelo do carro é obrigatório."),
   carYear: z.string().min(1, "Ano do carro é obrigatório."),
-  carEngine: z.string().optional(), // Novo campo de motorização
+  carEngine: z.string().optional(),
+  notes: z.string().optional(), // Novo campo de observações
 });
 
 type AutoPart = {
@@ -70,7 +77,8 @@ export function BudgetRequestForm() {
       parts: [{ name: "", brand: "", partCode: "" }],
       carModel: "",
       carYear: "",
-      carEngine: "", // Valor padrão para o novo campo
+      carEngine: "",
+      notes: "", // Valor padrão para o novo campo de observações
     },
   });
 
@@ -111,9 +119,10 @@ export function BudgetRequestForm() {
         .insert({
           car_model: values.carModel,
           car_year: values.carYear,
-          car_engine: values.carEngine, // Incluindo a motorização
+          car_engine: values.carEngine,
           parts: values.parts,
-          selected_shops_ids: selectedShops, // Save selected shop IDs
+          selected_shops_ids: selectedShops,
+          notes: values.notes, // Incluindo as observações
         })
         .select("short_id")
         .single();
@@ -132,7 +141,8 @@ export function BudgetRequestForm() {
           parts: values.parts,
           carModel: values.carModel,
           carYear: values.carYear,
-          carEngine: values.carEngine, // Incluindo a motorização no webhook
+          carEngine: values.carEngine,
+          notes: values.notes, // Incluindo as observações no webhook
         },
         selectedShops: selectedShopsDetails,
       };
@@ -291,6 +301,38 @@ export function BudgetRequestForm() {
               </Button>
             </div>
 
+            {/* Novo campo de Observações Gerais */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Observações Gerais (Opcional)</h3>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-1">
+                      <FormLabel>Observações</FormLabel>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Adicione qualquer informação adicional relevante para o orçamento, como urgência, detalhes específicos do problema, etc.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Peça com urgência, carro parado na oficina. Preferência por peças originais."
+                        className="resize-y min-h-[80px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Seção de Enviar para Autopeças */}
             <div>
               <h3 className="text-lg font-semibold mb-2">Enviar para Autopeças</h3>
@@ -335,7 +377,7 @@ export function BudgetRequestForm() {
               )}
             </div>
 
-            <Button type="submit" className="w-full text-lg py-6" disabled={isSubmitting}>
+            <Button type="submit" className="w-full text-lg py-6 bg-green-700 hover:bg-green-800" disabled={isSubmitting}>
               {isSubmitting ? "Enviando..." : "Realizar Orçamento"}
             </Button>
           </form>
