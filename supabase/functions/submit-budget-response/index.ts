@@ -44,7 +44,7 @@ serve(async (req) => {
     // 2. Find the original request to get its ID and list of selected shops
     const { data: requestData, error: requestError } = await supabaseAdmin
       .from('budget_requests')
-      .select('id, selected_shops_ids')
+      .select('id, selected_shops_ids, car_model, car_year, car_engine, parts, notes')
       .eq('short_id', body.short_id)
       .single()
 
@@ -69,6 +69,7 @@ serve(async (req) => {
         },
       ])
       .select()
+      .single() // Ensure we get the single inserted record
 
     if (responseInsertError) {
       throw responseInsertError
@@ -90,16 +91,55 @@ serve(async (req) => {
     }
 
     // 5. Update the status of the original request
-    await supabaseAdmin
+    const { error: updateRequestError } = await supabaseAdmin
       .from('budget_requests')
       .update({ status: newStatus })
       .eq('id', requestId)
+
+    if (updateRequestError) {
+      throw updateRequestError;
+    }
+
+    // 6. Send data to the new webhook
+    const webhookPayload = {
+      type: "budget_response_submitted",
+      short_id: body.short_id,
+      request_id: requestId,
+      response_id: responseInsertData.id,
+      shop_id: shopId,
+      shop_name: shopName,
+      shop_whatsapp: shopWhatsapp,
+      car_model: requestData.car_model,
+      car_year: requestData.car_year,
+      car_engine: requestData.car_engine,
+      requested_parts: requestData.parts, // Original parts requested
+      responded_parts_and_prices: body.parts_and_prices, // Parts with prices from this response
+      total_price: body.total_price,
+      response_notes: body.notes,
+      new_request_status: newStatus,
+      timestamp: new Date().toISOString(),
+    };
+
+    const webhookResponse = await fetch("https://webhook.usoteste.shop/webhook/chega_msg", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(webhookPayload),
+    });
+
+    if (!webhookResponse.ok) {
+      console.error(`Failed to send data to webhook chega_msg: ${webhookResponse.status} ${webhookResponse.statusText}`);
+      // Optionally, you could throw an error here if webhook failure should halt the process,
+      // but typically, database operations are more critical.
+    }
 
     return new Response(JSON.stringify({ success: true, data: responseInsertData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
+    console.error("Error in submit-budget-response function:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
