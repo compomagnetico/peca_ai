@@ -11,6 +11,7 @@ import ProfilePage from "./pages/Profile";
 import BudgetResponsesPage from "./pages/BudgetResponses";
 import AssistantPage from "./pages/Assistant";
 import CreateOrderPage from "./pages/CreateOrder";
+import SubmitBudgetResponsePage from "./pages/SubmitBudgetResponse";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create-order/:responseId" element={<CreateOrderPage />} />
           </Route>
+          <Route path="/submit-response/:shortId" element={<SubmitBudgetResponsePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

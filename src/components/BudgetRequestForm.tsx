@@ -133,15 +133,16 @@ export function BudgetRequestForm() {
       const selectedShopsDetails = autoParts?.filter((part) =>
         selectedShops.includes(part.id)
       );
+      
+      const responseUrl = `${window.location.origin}/submit-response/${shortId}`;
 
       const payload = {
         short_id: shortId,
-        partDetails: {
-          parts: values.parts,
+        responseUrl: responseUrl,
+        carDetails: {
           carModel: values.carModel,
           carYear: values.carYear,
           carEngine: values.carEngine,
-          notes: values.notes,
         },
         selectedShops: selectedShopsDetails,
       };
