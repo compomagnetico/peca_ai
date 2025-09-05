@@ -9,7 +9,8 @@ import BudgetRequestPage from "./pages/BudgetRequest";
 import AutoPartsPage from "./pages/AutoParts";
 import ProfilePage from "./pages/Profile";
 import BudgetResponsesPage from "./pages/BudgetResponses";
-import AssistantPage from "./pages/Assistant"; // Importar a nova página
+import AssistantPage from "./pages/Assistant";
+import CreateOrderPage from "./pages/CreateOrder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +28,8 @@ const App = () => (
             <Route path="/budget-responses" element={<BudgetResponsesPage />} />
             <Route path="/auto-parts" element={<AutoPartsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/assistant" element={<AssistantPage />} /> {/* Nova rota */}
+            <Route path="/assistant" element={<AssistantPage />} />
+            <Route path="/create-order/:responseId" element={<CreateOrderPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

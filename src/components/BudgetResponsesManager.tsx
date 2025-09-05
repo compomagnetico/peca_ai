@@ -40,8 +40,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
+import { RefreshCw, ShoppingBag, Trash2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
+import { Link } from "react-router-dom";
 
 type BudgetRequest = {
   id: string;
@@ -53,7 +54,7 @@ type BudgetRequest = {
   selected_shops_ids: string[];
   short_id: number;
   parts: { name: string; brand?: string; partCode?: string }[];
-  notes?: string; // Adicionado campo de observações
+  notes?: string;
 };
 
 type AutoPeca = {
@@ -321,11 +322,11 @@ export function BudgetResponsesManager() {
                                   <div className="font-semibold text-sm">
                                     Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                   </div>
-                                  <Button asChild size="sm" variant="outline" className="h-8">
-                                    <a href={`https://wa.me/${response.shop_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs">
-                                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                                      Contatar
-                                    </a>
+                                  <Button asChild size="sm" className="h-8 bg-green-600 hover:bg-green-700">
+                                    <Link to={`/create-order/${response.id}`} className="text-xs">
+                                      <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+                                      Realizar Pedido
+                                    </Link>
                                   </Button>
                                 </CardFooter>
                               </AccordionContent>
