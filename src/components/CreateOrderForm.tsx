@@ -132,37 +132,89 @@ export function CreateOrderForm() {
 
   const orderMutation = useMutation({
     mutationFn: createOrder,
-    onSuccess: () => {
-        showSuccess("Pedido realizado com sucesso!");
-        navigate("/budget-responses");
-    },
-    onError: (error) => {
-        showError(`Erro ao criar pedido: ${error.message}`);
-    }
   });
 
   async function onSubmit(values: z.infer<typeof orderFormSchema>) {
-    const toastId = showLoading("Criando pedido...");
+    if (!budgetResponse) {
+      showError("Dados do orçamento não encontrados. Tente novamente.");
+      return;
+    }
+
+    const toastId = showLoading("Finalizando pedido...");
     setIsSubmitting(true);
 
     const orderedParts = values.parts
-      .filter(p => p.selected)
+      .filter((p) => p.selected)
       .map(({ part, price, quantity }) => ({ part, price, quantity }));
 
     const orderData = {
-        budget_response_id: responseId,
-        ordered_parts: orderedParts,
-        total_price: totalPrice,
-        payment_method: values.paymentMethod,
-        change_for: values.paymentMethod === 'cash' && values.changeFor ? parseFloat(values.changeFor) : null,
-        observations: values.observations,
+      budget_response_id: responseId,
+      ordered_parts: orderedParts,
+      total_price: totalPrice,
+      payment_method: values.paymentMethod,
+      change_for:
+        values.paymentMethod === "cash" && values.changeFor
+          ? parseFloat(values.changeFor)
+          : null,
+      observations: values.observations,
     };
 
     try {
-        await orderMutation.mutateAsync(orderData);
-    } finally {
+      // 1. Create order in the database
+      const newOrder = await orderMutation.mutateAsync(orderData);
+
+      // 2. Prepare webhook payload
+      const webhookPayload = {
+        order: {
+          id: newOrder.id,
+          created_at: newOrder.created_at,
+          total_price: newOrder.total_price,
+          payment_method: newOrder.payment_method,
+          change_for: newOrder.change_for,
+          observations: newOrder.observations,
+        },
+        shop: {
+          name: budgetResponse.shop_name,
+          whatsapp: budgetResponse.shop_whatsapp,
+        },
+        parts: newOrder.ordered_parts,
+        budget_response_id: responseId,
+      };
+
+      // 3. Send data to webhook
+      const webhookResponse = await fetch(
+        "https://webhook.usoteste.shop/webhook/pedido",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(webhookPayload),
+        }
+      );
+
+      if (!webhookResponse.ok) {
+        // If webhook fails, the order is still created. Show success for order, but error for notification.
         dismissToast(toastId);
-        setIsSubmitting(false);
+        showSuccess("Pedido realizado com sucesso!");
+        showError(
+          "Houve um problema ao notificar a autopeça. Por favor, entre em contato diretamente."
+        );
+        navigate("/budget-responses");
+        return;
+      }
+
+      // 4. Everything was successful
+      dismissToast(toastId);
+      showSuccess("Pedido realizado e autopeça notificada com sucesso!");
+      navigate("/budget-responses");
+    } catch (error) {
+      dismissToast(toastId);
+      showError(
+        `Erro ao processar pedido: ${
+          error instanceof Error ? error.message : "Erro desconhecido"
+        }`
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
