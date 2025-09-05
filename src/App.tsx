@@ -32,7 +32,7 @@ const App = () => (
             <Route path="/assistant" element={<AssistantPage />} />
             <Route path="/create-order/:responseId" element={<CreateOrderPage />} />
           </Route>
-          <Route path="/submit-response/:shortId" element={<SubmitBudgetResponsePage />} />
+          <Route path="/submit-response/:shortId/:shopId" element={<SubmitBudgetResponsePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

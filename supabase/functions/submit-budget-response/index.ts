@@ -19,7 +19,7 @@ serve(async (req) => {
 
     const body = await req.json()
 
-    const requiredFields = ['short_id', 'shop_whatsapp', 'parts_and_prices', 'total_price'];
+    const requiredFields = ['short_id', 'shop_id', 'parts_and_prices', 'total_price'];
     for (const field of requiredFields) {
       if (!(field in body)) {
         return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
@@ -29,18 +29,17 @@ serve(async (req) => {
       }
     }
 
-    // 1. Find the shop id and name
+    // 1. Find the shop id, name, and whatsapp using the provided shop_id
     const { data: shopData, error: shopError } = await supabaseAdmin
       .from('autopecas')
-      .select('id, nome')
-      .eq('whatsapp', body.shop_whatsapp)
+      .select('id, nome, whatsapp')
+      .eq('id', body.shop_id)
       .single()
 
     if (shopError || !shopData) {
-      throw new Error(`Shop with WhatsApp number ${body.shop_whatsapp} not found.`);
+      throw new Error(`Shop with ID ${body.shop_id} not found.`);
     }
-    const shopId = shopData.id;
-    const shopName = shopData.nome;
+    const { id: shopId, nome: shopName, whatsapp: shopWhatsapp } = shopData;
 
     // 2. Find the original request to get its ID and list of selected shops
     const { data: requestData, error: requestError } = await supabaseAdmin
@@ -63,7 +62,7 @@ serve(async (req) => {
           request_id: requestId,
           shop_id: shopId,
           shop_name: shopName,
-          shop_whatsapp: body.shop_whatsapp,
+          shop_whatsapp: shopWhatsapp,
           parts_and_prices: body.parts_and_prices,
           total_price: body.total_price,
           notes: body.notes,

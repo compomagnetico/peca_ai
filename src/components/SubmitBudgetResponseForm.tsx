@@ -31,7 +31,6 @@ import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast
 import { Car } from "lucide-react";
 
 const responseFormSchema = z.object({
-  shop_whatsapp: z.string().min(10, "Por favor, insira um WhatsApp válido."),
   parts_and_prices: z.array(z.object({
     part: z.string(),
     price: z.coerce.number().min(0, "O preço não pode ser negativo."),
@@ -60,7 +59,7 @@ const fetchBudgetRequest = async (shortId: string): Promise<BudgetRequest> => {
 };
 
 export function SubmitBudgetResponseForm() {
-  const { shortId } = useParams<{ shortId: string }>();
+  const { shortId, shopId } = useParams<{ shortId: string; shopId: string }>();
   const navigate = useNavigate();
 
   const { data: request, isLoading } = useQuery<BudgetRequest>({
@@ -73,7 +72,6 @@ export function SubmitBudgetResponseForm() {
   const form = useForm<z.infer<typeof responseFormSchema>>({
     resolver: zodResolver(responseFormSchema),
     defaultValues: {
-      shop_whatsapp: "",
       parts_and_prices: [],
       notes: "",
     },
@@ -109,6 +107,7 @@ export function SubmitBudgetResponseForm() {
       const payload = {
         ...values,
         short_id: parseInt(shortId!, 10),
+        shop_id: shopId,
         total_price: totalPrice,
       };
 
@@ -175,20 +174,6 @@ export function SubmitBudgetResponseForm() {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-8">
-                <FormField
-                    control={form.control}
-                    name="shop_whatsapp"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Seu WhatsApp (para identificação)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="(XX) XXXXX-XXXX" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
                 <div className="space-y-4">
                 <h3 className="text-md font-semibold">Preços das Peças</h3>
                 <div className="space-y-2">

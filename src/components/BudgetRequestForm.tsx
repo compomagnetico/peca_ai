@@ -130,15 +130,15 @@ export function BudgetRequestForm() {
       if (requestError) throw requestError;
       const shortId = requestData.short_id;
 
-      const selectedShopsDetails = autoParts?.filter((part) =>
-        selectedShops.includes(part.id)
-      );
+      const selectedShopsDetails = autoParts
+        ?.filter((part) => selectedShops.includes(part.id))
+        .map(shop => ({
+            ...shop,
+            responseUrl: `${window.location.origin}/submit-response/${shortId}/${shop.id}`
+        }));
       
-      const responseUrl = `${window.location.origin}/submit-response/${shortId}`;
-
       const payload = {
         short_id: shortId,
-        responseUrl: responseUrl,
         carDetails: {
           carModel: values.carModel,
           carYear: values.carYear,
