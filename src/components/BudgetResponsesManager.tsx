@@ -42,6 +42,7 @@ import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
 import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
+import { useNavigate } from "react-router-dom"; // Importar useNavigate
 
 type BudgetRequest = {
   id: string;
@@ -53,7 +54,7 @@ type BudgetRequest = {
   selected_shops_ids: string[];
   short_id: number;
   parts: { name: string; brand?: string; partCode?: string }[];
-  notes?: string; // Adicionado campo de observações
+  notes?: string;
 };
 
 type AutoPeca = {
@@ -85,7 +86,9 @@ const fetchData = async (): Promise<FetchedData> => {
       .from("budget_requests")
       .select("*")
       .order("created_at", { ascending: false }),
-    supabase.from("budget_responses").select("*"),
+    supabase.from("budget_responses")
+      .select("*")
+      .order("created_at", { ascending: false }), // Adicionado ordenação para respostas
     supabase.from("autopecas").select("id, nome"),
   ]);
 
@@ -110,6 +113,7 @@ const deleteBudgetRequest = async (requestId: string) => {
 
 export function BudgetResponsesManager() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate(); // Inicializar useNavigate
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     id: string | null;
@@ -153,6 +157,26 @@ export function BudgetResponsesManager() {
   const handleConfirmDelete = () => {
     if (!dialogState.id) return;
     deleteRequestMutation.mutate(dialogState.id);
+  };
+
+  const handleCreateOrder = (
+    requestId: string,
+    responseId: string,
+    shopName: string,
+    shopWhatsapp: string,
+    partsAndPrices: { part: string; price: number }[],
+    totalPrice: number,
+    responseNotes?: string,
+  ) => {
+    // Codificar os dados complexos para passar via state ou URL params
+    const orderDetails = {
+      shopName,
+      shopWhatsapp,
+      partsAndPrices,
+      totalPrice,
+      responseNotes,
+    };
+    navigate(`/create-order/${requestId}/${responseId}`, { state: { orderDetails } });
   };
 
   const shopsMap = useMemo(() => {
@@ -321,11 +345,23 @@ export function BudgetResponsesManager() {
                                   <div className="font-semibold text-sm">
                                     Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                   </div>
-                                  <Button asChild size="sm" variant="outline" className="h-8">
-                                    <a href={`https://wa.me/${response.shop_whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs">
-                                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                                      Contatar
-                                    </a>
+                                  <Button
+                                    size="sm"
+                                    className="h-8 bg-blue-600 hover:bg-blue-700"
+                                    onClick={() =>
+                                      handleCreateOrder(
+                                        request.id,
+                                        response.id,
+                                        response.shop_name,
+                                        response.shop_whatsapp,
+                                        response.parts_and_prices,
+                                        response.total_price,
+                                        response.notes,
+                                      )
+                                    }
+                                  >
+                                    <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                                    Realizar Pedido
                                   </Button>
                                 </CardFooter>
                               </AccordionContent>
