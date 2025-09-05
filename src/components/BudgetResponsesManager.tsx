@@ -40,9 +40,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
-import { RefreshCw, MessageSquare, Trash2 } from "lucide-react";
+import { RefreshCw, MessageSquare, Trash2, ShoppingCart } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
-import { useNavigate } from "react-router-dom"; // Importar useNavigate
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 type BudgetRequest = {
   id: string;
@@ -88,7 +89,7 @@ const fetchData = async (): Promise<FetchedData> => {
       .order("created_at", { ascending: false }),
     supabase.from("budget_responses")
       .select("*")
-      .order("created_at", { ascending: false }), // Adicionado ordenação para respostas
+      .order("created_at", { ascending: false }),
     supabase.from("autopecas").select("id, nome"),
   ]);
 
@@ -113,12 +114,13 @@ const deleteBudgetRequest = async (requestId: string) => {
 
 export function BudgetResponsesManager() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate(); // Inicializar useNavigate
+  const navigate = useNavigate();
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     id: string | null;
     message: string;
   }>({ isOpen: false, id: null, message: "" });
+  const [itemsPendingDeletion, setItemsPendingDeletion] = useState<string[]>([]);
 
   const {
     data,
@@ -133,13 +135,6 @@ export function BudgetResponsesManager() {
 
   const deleteRequestMutation = useMutation({
     mutationFn: deleteBudgetRequest,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgetRequestsAndResponses"] });
-      showSuccess(
-        "Solicitação e suas respostas foram removidas com sucesso!"
-      );
-      setDialogState({ isOpen: false, id: null, message: "" });
-    },
     onError: (error) => {
       showError(`Erro ao remover: ${error.message}`);
     },
@@ -156,7 +151,35 @@ export function BudgetResponsesManager() {
 
   const handleConfirmDelete = () => {
     if (!dialogState.id) return;
-    deleteRequestMutation.mutate(dialogState.id);
+    const idToDelete = dialogState.id;
+
+    setItemsPendingDeletion((prev) => [...prev, idToDelete]);
+    setDialogState({ isOpen: false, id: null, message: "" });
+
+    const deletionTimer = setTimeout(() => {
+      deleteRequestMutation.mutate(idToDelete, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["budgetRequestsAndResponses"] });
+          showSuccess("Solicitação removida permanentemente.");
+        },
+        onError: (error) => {
+          setItemsPendingDeletion((prev) => prev.filter((id) => id !== idToDelete));
+          showError(`Erro ao remover: ${error.message}`);
+        },
+      });
+    }, 5000);
+
+    toast("Solicitação removida.", {
+      action: {
+        label: "Desfazer",
+        onClick: () => {
+          clearTimeout(deletionTimer);
+          setItemsPendingDeletion((prev) => prev.filter((id) => id !== idToDelete));
+          toast.success("Exclusão cancelada.");
+        },
+      },
+      duration: 5000,
+    });
   };
 
   const handleCreateOrder = (
@@ -168,7 +191,6 @@ export function BudgetResponsesManager() {
     totalPrice: number,
     responseNotes?: string,
   ) => {
-    // Codificar os dados complexos para passar via state ou URL params
     const orderDetails = {
       shopName,
       shopWhatsapp,
@@ -194,6 +216,11 @@ export function BudgetResponsesManager() {
       return acc;
     }, new Map<string, BudgetResponse[]>());
   }, [data?.responses]);
+
+  const filteredRequests = useMemo(() => {
+    if (!data?.requests) return [];
+    return data.requests.filter((request) => !itemsPendingDeletion.includes(request.id));
+  }, [data?.requests, itemsPendingDeletion]);
 
   if (isLoading) {
     return (
@@ -225,13 +252,15 @@ export function BudgetResponsesManager() {
         </Button>
       </div>
 
-      {!data?.requests || data.requests.length === 0 ? (
+      {!filteredRequests || filteredRequests.length === 0 ? (
         <div className="text-center text-gray-500 mt-8">
-          Nenhuma solicitação de orçamento encontrada.
+          {itemsPendingDeletion.length > 0 && (!data?.requests || data.requests.length === itemsPendingDeletion.length)
+            ? "Todas as solicitações foram removidas."
+            : "Nenhuma solicitação de orçamento encontrada."}
         </div>
       ) : (
         <Accordion type="multiple" collapsible className="w-full space-y-4">
-          {data.requests.map((request) => {
+          {filteredRequests.map((request) => {
             const responsesForThisRequest =
               responsesByRequestId.get(request.id) || [];
             const statusBadge = {
@@ -345,24 +374,41 @@ export function BudgetResponsesManager() {
                                   <div className="font-semibold text-sm">
                                     Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                                   </div>
-                                  <Button
-                                    size="sm"
-                                    className="h-8 bg-blue-600 hover:bg-blue-700"
-                                    onClick={() =>
-                                      handleCreateOrder(
-                                        request.id,
-                                        response.id,
-                                        response.shop_name,
-                                        response.shop_whatsapp,
-                                        response.parts_and_prices,
-                                        response.total_price,
-                                        response.notes,
-                                      )
-                                    }
-                                  >
-                                    <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-                                    Realizar Pedido
-                                  </Button>
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const whatsappNumber = response.shop_whatsapp.replace(/\D/g, '');
+                                        const fullWhatsappNumber = whatsappNumber.length > 11 ? whatsappNumber : `55${whatsappNumber}`;
+                                        window.open(`https://wa.me/${fullWhatsappNumber}`, '_blank');
+                                      }}
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                                      Contatar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="h-8 bg-blue-600 hover:bg-blue-700"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleCreateOrder(
+                                          request.id,
+                                          response.id,
+                                          response.shop_name,
+                                          response.shop_whatsapp,
+                                          response.parts_and_prices,
+                                          response.total_price,
+                                          response.notes,
+                                        )
+                                      }}
+                                    >
+                                      <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                                      Realizar Pedido
+                                    </Button>
+                                  </div>
                                 </CardFooter>
                               </AccordionContent>
                             </AccordionItem>
