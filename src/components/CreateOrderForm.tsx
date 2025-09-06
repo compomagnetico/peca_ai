@@ -37,7 +37,7 @@ const orderFormSchema = z.object({
     selected: z.boolean().default(false),
     part: z.string(),
     price: z.number(),
-    quantity: z.number().min(1, "A quantidade deve ser pelo menos 1."),
+    quantity: z.coerce.number().optional(),
   })).min(1, "Selecione pelo menos uma peça."),
   paymentMethod: z.enum(["pix", "card", "cash"], {
     required_error: "Selecione uma forma de pagamento.",
@@ -47,6 +47,16 @@ const orderFormSchema = z.object({
 }).refine(data => data.parts.some(p => p.selected), {
   message: "Você deve selecionar pelo menos uma peça para o pedido.",
   path: ["parts"],
+}).superRefine((data, ctx) => {
+    data.parts.forEach((part, index) => {
+        if (part.selected && (!part.quantity || part.quantity < 1)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "A quantidade deve ser pelo menos 1.",
+                path: [`parts`, index, `quantity`],
+            });
+        }
+    });
 });
 
 type BudgetResponse = {
@@ -105,7 +115,6 @@ export function CreateOrderForm() {
       const partsForForm = budgetResponse.parts_and_prices.map(p => ({
         ...p,
         selected: true,
-        quantity: 1,
       }));
       replace(partsForForm);
     }
@@ -124,7 +133,10 @@ export function CreateOrderForm() {
   const totalPrice = useMemo(() => {
     return watchedParts.reduce((total, part) => {
       if (part.selected) {
-        return total + part.price * part.quantity;
+        const quantity = Number(part.quantity);
+        if (!isNaN(quantity) && quantity > 0) {
+          return total + part.price * quantity;
+        }
       }
       return total;
     }, 0);
@@ -272,7 +284,14 @@ export function CreateOrderForm() {
                             render={({ field }) => (
                                 <FormItem>
                                 <FormControl>
-                                    <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 1)} />
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      placeholder="Qtd."
+                                      {...field}
+                                      value={field.value ?? ""}
+                                      onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>

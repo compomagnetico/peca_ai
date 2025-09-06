@@ -318,10 +318,7 @@ export function BudgetResponsesManager() {
                                     <p className="text-xs text-muted-foreground pt-0.5">{response.notes}</p>
                                   </div>
                                 )}
-                                <CardFooter className="flex justify-between items-center bg-muted/40 p-2.5 mt-3 -mx-3 -mb-3 rounded-b-lg">
-                                  <div className="font-semibold text-sm">
-                                    Total: {response.total_price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                                  </div>
+                                <CardFooter className="flex justify-end items-center bg-muted/40 p-2.5 mt-3 -mx-3 -mb-3 rounded-b-lg">
                                   <Button asChild size="sm" className="h-8 bg-green-600 hover:bg-green-700">
                                     <Link to={`/create-order/${response.id}`} className="text-xs">
                                       <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
