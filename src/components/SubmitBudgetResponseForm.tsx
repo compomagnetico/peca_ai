@@ -165,8 +165,8 @@ export function SubmitBudgetResponseForm() {
         </div>
         <Card>
         <CardHeader>
-            <CardTitle>Responder Orçamento #{request.short_id}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl">Responder Orçamento #{request.short_id}</CardTitle>
+            <CardDescription className="text-base pt-1">
               Preencha os valores para as peças solicitadas.
             </CardDescription>
         </CardHeader>
@@ -174,19 +174,19 @@ export function SubmitBudgetResponseForm() {
             <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-8">
                 <div className="p-4 border rounded-lg bg-muted/50">
-                  <h3 className="text-md font-semibold mb-2">Veículo</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                  <h3 className="text-lg font-semibold mb-2">Veículo</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-base">
                     <div>
-                      <p className="text-xs text-muted-foreground">Modelo</p>
+                      <p className="text-sm text-muted-foreground">Modelo</p>
                       <p className="font-medium">{request.car_model}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Ano</p>
+                      <p className="text-sm text-muted-foreground">Ano</p>
                       <p className="font-medium">{request.car_year}</p>
                     </div>
                     {request.car_engine && (
                       <div>
-                        <p className="text-xs text-muted-foreground">Motor</p>
+                        <p className="text-sm text-muted-foreground">Motor</p>
                         <p className="font-medium">{request.car_engine}</p>
                       </div>
                     )}
@@ -194,20 +194,20 @@ export function SubmitBudgetResponseForm() {
                 </div>
 
                 <div className="space-y-4">
-                <h3 className="text-md font-semibold">Preços das Peças</h3>
-                <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Preços das Peças</h3>
+                <div className="space-y-3">
                     {fields.map((field, index) => (
                     <FormField
                         key={field.id}
                         control={form.control}
                         name={`parts_and_prices.${index}.price`}
                         render={({ field: priceField }) => (
-                        <FormItem className="flex items-center gap-4 p-3 border rounded-lg">
-                            <FormLabel className="flex-1 min-w-0 break-words">{field.part}</FormLabel>
+                        <FormItem className="flex items-center gap-4 p-4 border rounded-lg">
+                            <FormLabel className="flex-1 min-w-0 break-words text-base">{field.part}</FormLabel>
                             <FormControl>
                                 <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">R$</span>
-                                    <Input type="number" step="0.01" className="pl-8 w-32" {...priceField} />
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">R$</span>
+                                    <Input type="number" step="0.01" className="pl-9 w-36 text-base h-11" {...priceField} />
                                 </div>
                             </FormControl>
                         </FormItem>
@@ -222,11 +222,11 @@ export function SubmitBudgetResponseForm() {
                     name="notes"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Observações (Opcional)</FormLabel>
+                        <FormLabel className="text-base">Observações (Opcional)</FormLabel>
                         <FormControl>
                         <Textarea
                             placeholder="Ex: Peças originais, prazo de entrega, etc."
-                            className="resize-y min-h-[80px]"
+                            className="resize-y min-h-[80px] text-base"
                             {...field}
                         />
                         </FormControl>
@@ -235,8 +235,8 @@ export function SubmitBudgetResponseForm() {
                     )}
                 />
             </CardContent>
-            <CardFooter className="flex justify-end items-center border-t pt-4">
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+            <CardFooter className="flex justify-end items-center border-t pt-6 pb-4">
+                <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Enviando..." : "Enviar Orçamento"}
                 </Button>
             </CardFooter>
