@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,23 +54,45 @@ type AutoPart = {
   whatsapp: string;
 };
 
-const fetchAutoParts = async (): Promise<AutoPart[]> => {
-  const { data, error } = await supabase
+type InitialData = {
+  autoParts: AutoPart[];
+  favoriteSuppliers: string[] | null;
+};
+
+const fetchInitialData = async (): Promise<InitialData> => {
+  const { data: autoParts, error: autoPartsError } = await supabase
     .from("autopecas")
     .select("id, nome, whatsapp")
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data;
+  if (autoPartsError) throw new Error(autoPartsError.message);
+
+  const { data: settings, error: settingsError } = await supabase
+    .from("settings")
+    .select("favorite_suppliers")
+    .eq("id", 1)
+    .single();
+  
+  if (settingsError && settingsError.code !== 'PGRST116') {
+    throw new Error(settingsError.message);
+  }
+
+  return { autoParts, favoriteSuppliers: settings?.favorite_suppliers || [] };
 };
 
 export function BudgetRequestForm() {
   const [selectedShops, setSelectedShops] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: autoParts, isLoading } = useQuery<AutoPart[]>({
-    queryKey: ["autoParts"],
-    queryFn: fetchAutoParts,
+  const { data, isLoading } = useQuery<InitialData>({
+    queryKey: ["budgetRequestInitialData"],
+    queryFn: fetchInitialData,
   });
+
+  useEffect(() => {
+    if (data?.favoriteSuppliers) {
+      setSelectedShops(data.favoriteSuppliers);
+    }
+  }, [data]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -89,8 +111,8 @@ export function BudgetRequestForm() {
   });
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked && autoParts) {
-      setSelectedShops(autoParts.map((part) => part.id));
+    if (checked && data?.autoParts) {
+      setSelectedShops(data.autoParts.map((part) => part.id));
     } else {
       setSelectedShops([]);
     }
@@ -130,7 +152,7 @@ export function BudgetRequestForm() {
       if (requestError) throw requestError;
       const shortId = requestData.short_id;
 
-      const selectedShopsDetails = autoParts
+      const selectedShopsDetails = data?.autoParts
         ?.filter((part) => selectedShops.includes(part.id))
         .map(shop => ({
             ...shop,
@@ -160,7 +182,7 @@ export function BudgetRequestForm() {
       dismissToast(toastId);
       showSuccess(`Orçamento #${shortId} solicitado com sucesso!`);
       form.reset();
-      setSelectedShops([]);
+      setSelectedShops(data?.favoriteSuppliers || []);
     } catch (error) {
       dismissToast(toastId);
       showError(`Erro ao solicitar orçamento: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
@@ -169,7 +191,7 @@ export function BudgetRequestForm() {
     }
   }
 
-  const allSelected = autoParts ? selectedShops.length === autoParts.length : false;
+  const allSelected = data?.autoParts ? selectedShops.length === data.autoParts.length : false;
 
   return (
     <Card className="w-full max-w-lg">
@@ -356,7 +378,7 @@ export function BudgetRequestForm() {
                       Marcar/Desmarcar Todos
                     </span>
                   </label>
-                  {autoParts?.map((part) => (
+                  {data?.autoParts?.map((part) => (
                     <label
                       key={part.id}
                       htmlFor={part.id}
