@@ -167,13 +167,32 @@ export function SubmitBudgetResponseForm() {
         <CardHeader>
             <CardTitle>Responder Orçamento #{request.short_id}</CardTitle>
             <CardDescription>
-            Preencha os valores para as peças solicitadas para o veículo: 
-            <span className="font-semibold"> {request.car_model} {request.car_year} {request.car_engine && `(${request.car_engine})`}</span>.
+              Preencha os valores para as peças solicitadas.
             </CardDescription>
         </CardHeader>
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-8">
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <h3 className="text-md font-semibold mb-2">Veículo</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Modelo</p>
+                      <p className="font-medium">{request.car_model}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Ano</p>
+                      <p className="font-medium">{request.car_year}</p>
+                    </div>
+                    {request.car_engine && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Motor</p>
+                        <p className="font-medium">{request.car_engine}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                 <h3 className="text-md font-semibold">Preços das Peças</h3>
                 <div className="space-y-2">
@@ -216,10 +235,7 @@ export function SubmitBudgetResponseForm() {
                     )}
                 />
             </CardContent>
-            <CardFooter className="flex justify-between items-center border-t pt-4">
-                <div className="text-xl font-bold">
-                    Total: {totalPrice.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                </div>
+            <CardFooter className="flex justify-end items-center border-t pt-4">
                 <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Enviando..." : "Enviar Orçamento"}
                 </Button>
