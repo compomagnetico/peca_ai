@@ -54,11 +54,24 @@ type BudgetRequest = {
   notes?: string;
 };
 
+const fetchBudgetRequest = async (shortId: string): Promise<BudgetRequest> => {
+  const { data, error } = await supabase
+    .from("budget_requests")
+    .select("*")
+    .eq("short_id", shortId)
+    .single();
+  if (error) {
+    console.error("Error fetching budget request:", error);
+    throw new Error(error.message);
+  }
+  return data;
+};
+
 export function SubmitBudgetResponseForm() {
   const { shortId, shopId } = useParams<{ shortId: string; shopId: string }>();
   const navigate = useNavigate();
 
-  const { data: request, isLoading } = useQuery<BudgetRequest>({
+  const { data: request, isLoading, error } = useQuery<BudgetRequest>({
     queryKey: ["budgetRequestForResponse", shortId],
     queryFn: () => fetchBudgetRequest(shortId!),
     enabled: !!shortId,
@@ -137,7 +150,7 @@ export function SubmitBudgetResponseForm() {
     return <Skeleton className="w-full max-w-2xl h-[600px]" />;
   }
 
-  if (!request) {
+  if (!request || error) {
     return (
       <Card className="w-full max-w-2xl text-center">
         <CardHeader>
