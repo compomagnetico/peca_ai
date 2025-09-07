@@ -31,6 +31,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
 import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const orderFormSchema = z.object({
   parts: z.array(z.object({
@@ -89,6 +90,7 @@ const createOrder = async (orderData: any) => {
 export function CreateOrderForm() {
   const { responseId } = useParams<{ responseId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: budgetResponse, isLoading } = useQuery<BudgetResponse>({
@@ -115,6 +117,7 @@ export function CreateOrderForm() {
       const partsForForm = budgetResponse.parts_and_prices.map(p => ({
         ...p,
         selected: true,
+        quantity: 1,
       }));
       replace(partsForForm);
     }
@@ -147,8 +150,8 @@ export function CreateOrderForm() {
   });
 
   async function onSubmit(values: z.infer<typeof orderFormSchema>) {
-    if (!budgetResponse) {
-      showError("Dados do orçamento não encontrados. Tente novamente.");
+    if (!budgetResponse || !user) {
+      showError("Dados do orçamento ou do usuário não encontrados. Tente novamente.");
       return;
     }
 
@@ -160,6 +163,7 @@ export function CreateOrderForm() {
       .map(({ part, price, quantity }) => ({ part, price, quantity }));
 
     const orderData = {
+      user_id: user.id,
       budget_response_id: responseId,
       ordered_parts: orderedParts,
       total_price: totalPrice,
@@ -208,7 +212,7 @@ export function CreateOrderForm() {
         dismissToast(toastId);
         showSuccess("Pedido realizado com sucesso!");
         showError(
-          "Houve um problema ao notificar a autopeça. Por favor, entre em contato diretamente."
+          "Houve um problema ao notificar o fornecedor. Por favor, entre em contato diretamente."
         );
         navigate("/budget-responses");
         return;
@@ -216,7 +220,7 @@ export function CreateOrderForm() {
 
       // 4. Everything was successful
       dismissToast(toastId);
-      showSuccess("Pedido realizado e autopeça notificada com sucesso!");
+      showSuccess("Pedido realizado e fornecedor notificado com sucesso!");
       navigate("/budget-responses");
     } catch (error) {
       dismissToast(toastId);

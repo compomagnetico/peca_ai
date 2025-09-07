@@ -35,6 +35,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   parts: z.array(z.object({
@@ -59,17 +60,18 @@ type InitialData = {
   favoriteSuppliers: string[] | null;
 };
 
-const fetchInitialData = async (): Promise<InitialData> => {
+const fetchInitialData = async (userId: string): Promise<InitialData> => {
   const { data: autoParts, error: autoPartsError } = await supabase
     .from("autopecas")
     .select("id, nome, whatsapp")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (autoPartsError) throw new Error(autoPartsError.message);
 
   const { data: settings, error: settingsError } = await supabase
     .from("settings")
     .select("favorite_suppliers")
-    .eq("id", 1)
+    .eq("user_id", userId)
     .single();
   
   if (settingsError && settingsError.code !== 'PGRST116') {
@@ -80,12 +82,14 @@ const fetchInitialData = async (): Promise<InitialData> => {
 };
 
 export function BudgetRequestForm() {
+  const { user } = useAuth();
   const [selectedShops, setSelectedShops] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data, isLoading } = useQuery<InitialData>({
-    queryKey: ["budgetRequestInitialData"],
-    queryFn: fetchInitialData,
+    queryKey: ["budgetRequestInitialData", user?.id],
+    queryFn: () => fetchInitialData(user!.id),
+    enabled: !!user,
   });
 
   useEffect(() => {
@@ -127,8 +131,12 @@ export function BudgetRequestForm() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+        showError("Você precisa estar logado para solicitar um orçamento.");
+        return;
+    }
     if (selectedShops.length === 0) {
-      showError("Selecione pelo menos uma autopeça para enviar o orçamento.");
+      showError("Selecione pelo menos um fornecedor para enviar o orçamento.");
       return;
     }
 
@@ -139,6 +147,7 @@ export function BudgetRequestForm() {
       const { data: requestData, error: requestError } = await supabase
         .from("budget_requests")
         .insert({
+          user_id: user.id,
           car_model: values.carModel,
           car_year: values.carYear,
           car_engine: values.carEngine,
@@ -198,7 +207,7 @@ export function BudgetRequestForm() {
       <CardHeader>
         <CardTitle>Solicitar Orçamento de Peça</CardTitle>
         <CardDescription>
-          Preencha os detalhes do carro, adicione as peças e selecione para quais autopeças enviar.
+          Preencha os detalhes do carro, adicione as peças e selecione para quais fornecedores enviar.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -355,8 +364,8 @@ export function BudgetRequestForm() {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">Enviar para Autopeças</h3>
-              <FormLabel>Selecione as autopeças para enviar o orçamento:</FormLabel>
+              <h3 className="text-lg font-semibold mb-2">Enviar para Fornecedores</h3>
+              <FormLabel>Selecione os fornecedores para enviar o orçamento:</FormLabel>
               {isLoading ? (
                  <div className="space-y-2 mt-2">
                     <Skeleton className="h-10 w-full" />

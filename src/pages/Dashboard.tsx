@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Car, FileText, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { startOfToday, startOfWeek, startOfMonth } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
-const getStats = async () => {
+const getStats = async (userId: string) => {
   const today = startOfToday().toISOString();
   const week = startOfWeek(new Date()).toISOString();
   const month = startOfMonth(new Date()).toISOString();
@@ -20,13 +21,13 @@ const getStats = async () => {
     weekCompletedRes,
     monthCompletedRes,
   ] = await Promise.all([
-    supabase.from("autopecas").select("*", { count: "exact", head: true }),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).gte("created_at", today),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).gte("created_at", week),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).gte("created_at", month),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("status", "completed").gte("created_at", today),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("status", "completed").gte("created_at", week),
-    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("status", "completed").gte("created_at", month),
+    supabase.from("autopecas").select("*", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", today),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", week),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("created_at", month),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("status", "completed").gte("created_at", today),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("status", "completed").gte("created_at", week),
+    supabase.from("budget_requests").select("*", { count: "exact", head: true }).eq("user_id", userId).eq("status", "completed").gte("created_at", month),
   ]);
 
   const checkError = (res: any, name: string) => {
@@ -46,9 +47,11 @@ const getStats = async () => {
 };
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboardStats"],
-    queryFn: getStats,
+    queryKey: ["dashboardStats", user?.id],
+    queryFn: () => getStats(user!.id),
+    enabled: !!user,
   });
 
   return (
@@ -58,7 +61,7 @@ const Dashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Autopeças Cadastradas
+              Fornecedores Cadastrados
             </CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>

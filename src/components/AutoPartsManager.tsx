@@ -40,6 +40,7 @@ import {
 import { showError, showSuccess } from "@/utils/toast";
 import { Pencil, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const formSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório."),
@@ -50,18 +51,20 @@ type AutoPart = {
   id: string;
   nome: string;
   whatsapp: string;
+  user_id: string;
 };
 
-const fetchAutoParts = async () => {
+const fetchAutoParts = async (userId: string) => {
   const { data, error } = await supabase
     .from("autopecas")
     .select("*")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data;
 };
 
-const addAutoPart = async (part: z.infer<typeof formSchema>) => {
+const addAutoPart = async (part: z.infer<typeof formSchema> & { user_id: string }) => {
   const { data, error } = await supabase
     .from("autopecas")
     .insert(part)
@@ -71,7 +74,7 @@ const addAutoPart = async (part: z.infer<typeof formSchema>) => {
   return data;
 };
 
-const updateAutoPart = async (part: AutoPart) => {
+const updateAutoPart = async (part: Pick<AutoPart, 'id' | 'nome' | 'whatsapp'>) => {
   const { data, error } = await supabase
     .from("autopecas")
     .update({ nome: part.nome, whatsapp: part.whatsapp })
@@ -89,18 +92,20 @@ const deleteAutoPart = async (id: string) => {
 
 export function AutoPartsManager() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPart, setSelectedPart] = useState<AutoPart | null>(null);
 
   const { data: autoParts, isLoading } = useQuery<AutoPart[]>({
-    queryKey: ["autoParts"],
-    queryFn: fetchAutoParts,
+    queryKey: ["autoParts", user?.id],
+    queryFn: () => fetchAutoParts(user!.id),
+    enabled: !!user,
   });
 
   const addMutation = useMutation({
     mutationFn: addAutoPart,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["autoParts"] });
+      queryClient.invalidateQueries({ queryKey: ["autoParts", user?.id] });
       showSuccess("Autopeça adicionada com sucesso!");
       addForm.reset();
     },
@@ -112,7 +117,7 @@ export function AutoPartsManager() {
   const updateMutation = useMutation({
     mutationFn: updateAutoPart,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["autoParts"] });
+      queryClient.invalidateQueries({ queryKey: ["autoParts", user?.id] });
       showSuccess("Autopeça atualizada com sucesso!");
       setIsEditDialogOpen(false);
       setSelectedPart(null);
@@ -125,7 +130,7 @@ export function AutoPartsManager() {
   const deleteMutation = useMutation({
     mutationFn: deleteAutoPart,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["autoParts"] });
+      queryClient.invalidateQueries({ queryKey: ["autoParts", user?.id] });
       showSuccess("Autopeça removida com sucesso!");
     },
     onError: (error) => {
@@ -143,7 +148,8 @@ export function AutoPartsManager() {
   });
 
   const handleAddSubmit = (values: z.infer<typeof formSchema>) => {
-    addMutation.mutate(values);
+    if (!user) return;
+    addMutation.mutate({ ...values, user_id: user.id });
   };
 
   const handleEditSubmit = (values: z.infer<typeof formSchema>) => {
@@ -162,8 +168,8 @@ export function AutoPartsManager() {
     <div className="space-y-8 w-full max-w-lg">
       <Card>
         <CardHeader>
-          <CardTitle>Cadastrar Autopeça</CardTitle>
-          <CardDescription>Adicione uma nova autopeça.</CardDescription>
+          <CardTitle>Cadastrar Fornecedor</CardTitle>
+          <CardDescription>Adicione um novo fornecedor de autopeças.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...addForm}>
@@ -178,7 +184,7 @@ export function AutoPartsManager() {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Bateria Moura" {...field} />
+                      <Input placeholder="Ex: Fornecedor de Peças ABC" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -207,7 +213,7 @@ export function AutoPartsManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Autopeças</CardTitle>
+          <CardTitle>Lista de Fornecedores</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -258,7 +264,7 @@ export function AutoPartsManager() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Autopeça</DialogTitle>
+            <DialogTitle>Editar Fornecedor</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
             <form

@@ -43,6 +43,7 @@ import { useMemo, useState } from "react";
 import { RefreshCw, ShoppingBag, Trash2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 type BudgetRequest = {
   id: string;
@@ -80,22 +81,27 @@ type FetchedData = {
   shops: AutoPeca[];
 };
 
-const fetchData = async (): Promise<FetchedData> => {
-  const [requestsRes, responsesRes, shopsRes] = await Promise.all([
-    supabase
-      .from("budget_requests")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase.from("budget_responses").select("*"),
-    supabase.from("autopecas").select("id, nome"),
+const fetchData = async (userId: string): Promise<FetchedData> => {
+  const { data: requests, error: requestsError } = await supabase
+    .from("budget_requests")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (requestsError) throw requestsError;
+
+  const requestIds = requests.map(r => r.id);
+
+  const [responsesRes, shopsRes] = await Promise.all([
+    supabase.from("budget_responses").select("*").in("request_id", requestIds),
+    supabase.from("autopecas").select("id, nome").eq("user_id", userId),
   ]);
 
-  if (requestsRes.error) throw requestsRes.error;
   if (responsesRes.error) throw responsesRes.error;
   if (shopsRes.error) throw shopsRes.error;
 
   return {
-    requests: requestsRes.data as BudgetRequest[],
+    requests: requests as BudgetRequest[],
     responses: responsesRes.data as BudgetResponse[],
     shops: shopsRes.data as AutoPeca[],
   };
@@ -111,6 +117,7 @@ const deleteBudgetRequest = async (requestId: string) => {
 
 export function BudgetResponsesManager() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     id: string | null;
@@ -124,14 +131,15 @@ export function BudgetResponsesManager() {
     refetch,
     isRefetching,
   } = useQuery<FetchedData>({
-    queryKey: ["budgetRequestsAndResponses"],
-    queryFn: fetchData,
+    queryKey: ["budgetRequestsAndResponses", user?.id],
+    queryFn: () => fetchData(user!.id),
+    enabled: !!user,
   });
 
   const deleteRequestMutation = useMutation({
     mutationFn: deleteBudgetRequest,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgetRequestsAndResponses"] });
+      queryClient.invalidateQueries({ queryKey: ["budgetRequestsAndResponses", user?.id] });
       showSuccess(
         "Solicitação e suas respostas foram removidas com sucesso!"
       );
@@ -275,11 +283,11 @@ export function BudgetResponsesManager() {
                   )}
 
                   <div className="space-y-2 mt-4">
-                    <h4 className="text-sm font-semibold">Respostas das Autopeças:</h4>
+                    <h4 className="text-sm font-semibold">Respostas dos Fornecedores:</h4>
                     <Accordion type="multiple" className="w-full">
                       {(request.selected_shops_ids || []).map((shopId) => {
                         const shopName =
-                          shopsMap.get(shopId) || "Autopeça Desconhecida";
+                          shopsMap.get(shopId) || "Fornecedor Desconhecido";
                         const response = responsesForThisRequest.find(
                           (r) => r.shop_id === shopId
                         );

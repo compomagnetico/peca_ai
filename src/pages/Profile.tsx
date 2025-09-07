@@ -30,6 +30,7 @@ import { LogoUploader } from "@/components/LogoUploader";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/contexts/AuthContext";
 
 const settingsSchema = z.object({
   workshop_name: z.string().min(1, "O nome da oficina é obrigatório."),
@@ -47,30 +48,31 @@ type AutoPart = {
   nome: string;
 };
 
-const fetchData = async () => {
+const fetchData = async (userId: string) => {
   const { data: settings, error: settingsError } = await supabase
     .from("settings")
     .select("*")
-    .eq("id", 1)
+    .eq("user_id", userId)
     .single();
 
-  if (settingsError && settingsError.code !== 'PGRST116') {
+  if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine on first load
     throw new Error(settingsError.message);
   }
 
   const { data: autoParts, error: autoPartsError } = await supabase
     .from("autopecas")
-    .select("id, nome");
+    .select("id, nome")
+    .eq("user_id", userId);
 
   if (autoPartsError) throw new Error(autoPartsError.message);
 
   return { settings, autoParts };
 };
 
-const updateSettings = async (settings: Partial<Settings>) => {
+const updateSettings = async (settings: Partial<Settings> & { user_id: string }) => {
   const { data, error } = await supabase
     .from("settings")
-    .upsert({ id: 1, ...settings }, { onConflict: 'id' })
+    .upsert({ ...settings }, { onConflict: 'user_id' })
     .select()
     .single();
   
@@ -80,16 +82,18 @@ const updateSettings = async (settings: Partial<Settings>) => {
 
 const ProfilePage = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["profileData"],
-    queryFn: fetchData,
+    queryKey: ["profileData", user?.id],
+    queryFn: () => fetchData(user!.id),
+    enabled: !!user,
   });
 
   const mutation = useMutation({
     mutationFn: updateSettings,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profileData"] });
+      queryClient.invalidateQueries({ queryKey: ["profileData", user?.id] });
       showSuccess("Perfil atualizado com sucesso!");
     },
     onError: (error) => {
@@ -116,7 +120,8 @@ const ProfilePage = () => {
   }, [data, form]);
 
   const onSubmit = (values: Settings) => {
-    mutation.mutate(values);
+    if (!user) return;
+    mutation.mutate({ ...values, user_id: user.id });
   };
 
   return (
@@ -128,7 +133,7 @@ const ProfilePage = () => {
             Gerencie as informações e preferências da sua oficina.
           </CardDescription>
         </CardHeader>
-        {isLoading ? (
+        {isLoading || !user ? (
           <CardContent className="space-y-6">
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-10 w-full" />
