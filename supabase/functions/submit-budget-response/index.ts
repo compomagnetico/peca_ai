@@ -65,7 +65,6 @@ serve(async (req) => {
           shop_whatsapp: shopWhatsapp,
           parts_and_prices: body.parts_and_prices,
           total_price: body.total_price,
-          notes: body.notes,
         },
       ])
       .select()

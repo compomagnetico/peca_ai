@@ -28,14 +28,20 @@ import {
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { showError, showSuccess, showLoading, dismissToast } from "@/utils/toast";
-import { Car } from "lucide-react";
+import { Car, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const responseFormSchema = z.object({
   parts_and_prices: z.array(z.object({
     part: z.string(),
-    price: z.coerce.number().min(0, "O preço não pode ser negativo."),
+    price: z.coerce.number().nonnegative("O preço não pode ser negativo.").optional(),
+    notes: z.string().optional(),
   })),
-  notes: z.string().optional(),
 });
 
 type BudgetRequest = {
@@ -46,16 +52,6 @@ type BudgetRequest = {
   car_engine?: string;
   parts: { name: string; brand?: string; partCode?: string }[];
   notes?: string;
-};
-
-const fetchBudgetRequest = async (shortId: string): Promise<BudgetRequest> => {
-  const { data, error } = await supabase
-    .from("budget_requests")
-    .select("short_id, car_model, car_year, car_engine, parts, notes")
-    .eq("short_id", shortId)
-    .single();
-  if (error) throw new Error("Solicitação de orçamento não encontrada ou inválida.");
-  return data;
 };
 
 export function SubmitBudgetResponseForm() {
@@ -73,7 +69,6 @@ export function SubmitBudgetResponseForm() {
     resolver: zodResolver(responseFormSchema),
     defaultValues: {
       parts_and_prices: [],
-      notes: "",
     },
   });
 
@@ -86,7 +81,8 @@ export function SubmitBudgetResponseForm() {
     if (request) {
       const partsForForm = request.parts.map(p => ({
         part: p.name,
-        price: 0,
+        price: undefined,
+        notes: "",
       }));
       replace(partsForForm);
     }
@@ -129,7 +125,6 @@ export function SubmitBudgetResponseForm() {
       dismissToast(toastId);
       showSuccess("Orçamento enviado com sucesso! Obrigado.");
       form.reset();
-      // Redirect to a thank you page or disable the form
       setTimeout(() => navigate("/"), 2000);
 
     } catch (error) {
@@ -195,45 +190,67 @@ export function SubmitBudgetResponseForm() {
 
                 <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Preços das Peças</h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                     {fields.map((field, index) => (
-                    <FormField
-                        key={field.id}
-                        control={form.control}
-                        name={`parts_and_prices.${index}.price`}
-                        render={({ field: priceField }) => (
-                        <FormItem className="flex items-center gap-4 p-4 border rounded-lg">
-                            <FormLabel className="flex-1 min-w-0 break-words text-base">{field.part}</FormLabel>
-                            <FormControl>
-                                <div className="relative">
+                      <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="font-medium text-base pt-2 flex-1">{field.part}</span>
+                          <FormField
+                            control={form.control}
+                            name={`parts_and_prices.${index}.price`}
+                            render={({ field: priceField }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">R$</span>
-                                    <Input type="number" step="0.01" className="pl-9 w-36 text-base h-11" {...priceField} />
-                                </div>
-                            </FormControl>
-                        </FormItem>
-                        )}
-                    />
+                                    <Input
+                                      type="number"
+                                      step="0.01"
+                                      className="pl-9 w-36 text-base h-11"
+                                      {...priceField}
+                                      value={priceField.value ?? ""}
+                                      onChange={e => priceField.onChange(e.target.value === '' ? undefined : e.target.value)}
+                                    />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name={`parts_and_prices.${index}.notes`}
+                          render={({ field: notesField }) => (
+                            <FormItem>
+                              <div className="flex items-center gap-1.5">
+                                <FormLabel className="text-sm">Observações</FormLabel>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Coloque nesse campo qualquer informação relacionada a peça solicitada.</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Ex: Peça original, 3 dias para entrega..."
+                                  className="resize-y text-sm"
+                                  {...notesField}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     ))}
                 </div>
                 </div>
-
-                <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-base">Observações (Opcional)</FormLabel>
-                        <FormControl>
-                        <Textarea
-                            placeholder="Ex: Peças originais, prazo de entrega, etc."
-                            className="resize-y min-h-[80px] text-base"
-                            {...field}
-                        />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
             </CardContent>
             <CardFooter className="flex justify-end items-center border-t pt-6 pb-4">
                 <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
