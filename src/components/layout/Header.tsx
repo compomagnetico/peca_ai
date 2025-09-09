@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, Car, Home, FileText, User, Inbox, BrainCircuit } from "lucide-react";
+import { Menu, Car, Home, FileText, User, Inbox, BrainCircuit, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext"; // Importar useAuth
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -15,6 +16,7 @@ const navigation = [
 
 export function Header() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user, profile, signOut } = useAuth(); // Usar useAuth
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
@@ -49,11 +51,29 @@ export function Header() {
               </NavLink>
             ))}
           </nav>
+          {user && (
+            <div className="mt-auto p-4 border-t flex items-center justify-between text-sm text-muted-foreground">
+              <span>Olá, {profile?.username || user.email || user.phone || "Usuário"}</span>
+              <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Sair</span>
+              </Button>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
       <div className="w-full flex-1">
         {/* Pode adicionar um campo de busca aqui no futuro */}
       </div>
+      {user && (
+        <div className="hidden md:flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">Olá, {profile?.username || user.email || user.phone || "Usuário"}</span>
+          <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Sair
+          </Button>
+        </div>
+      )}
     </header>
   );
 }

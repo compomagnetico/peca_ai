@@ -33,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 
 const settingsSchema = z.object({
+  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres.").max(20, "Nome de usuário não pode exceder 20 caracteres.").regex(/^[a-zA-Z0-9_]+$/, "Nome de usuário pode conter apenas letras, números e sublinhados.").toLowerCase(),
   workshop_name: z.string().min(1, "O nome da oficina é obrigatório."),
   workshop_address: z.string().min(1, "O endereço é obrigatório."),
   workshop_whatsapp: z.string().min(1, "O WhatsApp é obrigatório."),
@@ -59,6 +60,16 @@ const fetchData = async (userId: string) => {
     throw new Error(settingsError.message);
   }
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .single();
+
+  if (profileError && profileError.code !== 'PGRST116') {
+    throw new Error(profileError.message);
+  }
+
   const { data: autoParts, error: autoPartsError } = await supabase
     .from("autopecas")
     .select("id, nome")
@@ -66,18 +77,32 @@ const fetchData = async (userId: string) => {
 
   if (autoPartsError) throw new Error(autoPartsError.message);
 
-  return { settings, autoParts };
+  return { settings, profile, autoParts };
 };
 
-const updateSettings = async (settings: Partial<Settings> & { user_id: string }) => {
-  const { data, error } = await supabase
+const updateSettingsAndProfile = async (values: Partial<Settings> & { user_id: string }) => {
+  const { user_id, username, ...settingsToUpdate } = values;
+
+  // Update settings table
+  const { data: settingsData, error: settingsError } = await supabase
     .from("settings")
-    .upsert({ ...settings }, { onConflict: 'user_id' })
+    .upsert({ ...settingsToUpdate, user_id }, { onConflict: 'user_id' })
     .select()
     .single();
   
-  if (error) throw new Error(error.message);
-  return data;
+  if (settingsError) throw new Error(settingsError.message);
+
+  // Update profiles table for username
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .update({ username })
+    .eq("id", user_id)
+    .select()
+    .single();
+
+  if (profileError) throw new Error(profileError.message);
+
+  return { settingsData, profileData };
 };
 
 const ProfilePage = () => {
@@ -91,7 +116,7 @@ const ProfilePage = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: updateSettings,
+    mutationFn: updateSettingsAndProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profileData", user?.id] });
       showSuccess("Perfil atualizado com sucesso!");
@@ -104,6 +129,7 @@ const ProfilePage = () => {
   const form = useForm<Settings>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
+      username: "",
       workshop_name: "",
       workshop_address: "",
       workshop_whatsapp: "",
@@ -114,8 +140,11 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (data?.settings) {
-      form.reset(data.settings);
+    if (data) {
+      form.reset({
+        ...data.settings,
+        username: data.profile?.username || "",
+      });
     }
   }, [data, form]);
 
@@ -144,6 +173,23 @@ const ProfilePage = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Informações da Conta</h3>
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome de Usuário</FormLabel>
+                        <FormControl>
+                          <Input placeholder="seu_usuario" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Informações da Oficina</h3>
                   <FormField

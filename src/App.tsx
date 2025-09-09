@@ -14,6 +14,9 @@ import CreateOrderPage from "./pages/CreateOrder";
 import SubmitBudgetResponsePage from "./pages/SubmitBudgetResponse";
 import NotFound from "./pages/NotFound";
 import LoginPage from "./pages/Login";
+import SignUpPage from "./pages/SignUp"; // Importar a nova página de cadastro
+import ForgotPasswordPage from "./pages/ForgotPassword"; // Importar a nova página de recuperação de senha
+import UpdatePasswordPage from "./pages/UpdatePassword"; // Importar a nova página de atualização de senha
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
@@ -28,6 +31,9 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} /> {/* Nova rota de cadastro */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} /> {/* Nova rota de recuperação de senha */}
+            <Route path="/update-password" element={<UpdatePasswordPage />} /> {/* Nova rota para definir nova senha */}
             
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>

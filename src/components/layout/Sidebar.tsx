@@ -1,17 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { Home, Car, FileText, User, Inbox, BrainCircuit } from "lucide-react"; // Importar BrainCircuit
+import { Home, Car, FileText, User, Inbox, BrainCircuit, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext"; // Importar useAuth
+import { Button } from "@/components/ui/button"; // Importar Button
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
   { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
   { name: "Auto Peças", href: "/auto-parts", icon: Car },
-  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit }, // Novo item de navegação
+  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit },
   { name: "Perfil", href: "/profile", icon: User },
 ];
 
 export function Sidebar() {
+  const { user, profile, signOut } = useAuth(); // Usar useAuth
+
   return (
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
@@ -41,6 +45,17 @@ export function Sidebar() {
               </NavLink>
             ))}
           </nav>
+        </div>
+        <div className="mt-auto p-4 border-t">
+          {user && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Olá, {profile?.username || user.email || user.phone || "Usuário"}</span>
+              <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8">
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Sair</span>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
