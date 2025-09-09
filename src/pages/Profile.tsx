@@ -25,6 +25,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useEffect } from "react";
 import { LogoUploader } from "@/components/LogoUploader";
 import { Switch } from "@/components/ui/switch";
@@ -299,26 +310,28 @@ const ProfilePage = () => {
         )}
       </Card>
 
-      <Card className="w-full max-w-2xl border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-          <CardDescription>
-            Ações que não podem ser desfeitas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Sair da sua conta</p>
-              <p className="text-sm text-muted-foreground">Você será redirecionado para a página de login.</p>
-            </div>
-            <Button variant="destructive" onClick={signOut}>
+      <div className="w-full max-w-2xl flex justify-end">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Saída</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você será redirecionado para a tela de login. Deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={signOut} className="bg-destructive hover:bg-destructive/90">Sair</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 };
