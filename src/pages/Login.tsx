@@ -31,8 +31,8 @@ const LoginPage = () => {
         <Auth
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
-          providers={["email", "phone"]} {/* Habilita cadastro por e-mail e telefone */}
-          showLinks={true} {/* Mostra links para cadastro e recuperação de senha */}
+          providers={["email", "phone"]}
+          showLinks={true}
           theme="light"
           localization={{
             variables: {
