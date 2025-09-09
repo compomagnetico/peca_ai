@@ -37,8 +37,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { useMemo, useState } from "react";
 import { RefreshCw, ShoppingBag, Trash2 } from "lucide-react";
 import { showError, showSuccess } from "@/utils/toast";
@@ -220,16 +218,16 @@ export function BudgetResponsesManager() {
             const responsesForThisRequest =
               responsesByRequestId.get(request.id) || [];
             const statusBadge = {
-              pending: <Badge variant="outline">Pendente</Badge>,
-              answered: <Badge variant="default" className="bg-blue-500">Respondido Parcialmente</Badge>,
-              completed: <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">Finalizado</Badge>,
+              pending: <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Pendente</Badge>,
+              answered: <Badge variant="outline" className="border-blue-500 text-blue-600 bg-blue-50">Respondido Parcialmente</Badge>,
+              completed: <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Finalizado</Badge>,
             };
 
             return (
               <AccordionItem
                 value={request.id}
                 key={request.id}
-                className="border rounded-lg"
+                className="border rounded-lg bg-card"
               >
                 <AccordionTrigger className="px-4 py-3 hover:no-underline">
                   <div className="flex items-center justify-between w-full">
@@ -255,12 +253,12 @@ export function BudgetResponsesManager() {
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-4 space-y-4 bg-muted/20">
+                <AccordionContent className="p-4 space-y-4 border-t">
                   <div>
                     <h4 className="text-sm font-semibold mb-2">Peças Solicitadas:</h4>
                     <div className="space-y-2">
                       {(request.parts || []).map((part, index) => (
-                        <div key={index} className="text-sm p-2 bg-background rounded-md border">
+                        <div key={index} className="text-sm p-2 bg-secondary rounded-md border">
                           <p className="font-medium">{part.name}</p>
                           {(part.brand || part.partCode) && (
                             <p className="text-xs text-muted-foreground">
@@ -276,15 +274,15 @@ export function BudgetResponsesManager() {
                   {request.notes && (
                     <div className="mt-4">
                       <h4 className="text-sm font-semibold mb-2">Observações da Solicitação:</h4>
-                      <p className="text-sm p-2 bg-background rounded-md border text-muted-foreground">
+                      <p className="text-sm p-2 bg-secondary rounded-md border text-muted-foreground">
                         {request.notes}
                       </p>
                     </div>
                   )}
 
-                  <div className="space-y-2 mt-4">
+                  <div className="space-y-4 mt-4">
                     <h4 className="text-sm font-semibold">Respostas dos Fornecedores:</h4>
-                    <Accordion type="multiple" className="w-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {(request.selected_shops_ids || []).map((shopId) => {
                         const shopName =
                           shopsMap.get(shopId) || "Fornecedor Desconhecido";
@@ -294,14 +292,14 @@ export function BudgetResponsesManager() {
 
                         if (response) {
                           return (
-                            <AccordionItem value={response.id} key={response.id} className="border rounded-lg mb-2">
-                              <AccordionTrigger className="px-4 py-3 hover:no-underline bg-muted/40">
-                                <div className="flex items-center justify-between w-full">
-                                  <span className="font-semibold text-sm">{response.shop_name}</span>
+                            <Card key={response.id} className="bg-background">
+                              <CardHeader className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <CardTitle className="text-base">{response.shop_name}</CardTitle>
                                   <Badge className="bg-green-500 text-white">Respondido</Badge>
                                 </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="p-3 bg-background">
+                              </CardHeader>
+                              <CardContent className="p-4 pt-0">
                                 <Table>
                                   <TableHeader>
                                     <TableRow>
@@ -326,29 +324,29 @@ export function BudgetResponsesManager() {
                                     <p className="text-xs text-muted-foreground pt-0.5">{response.notes}</p>
                                   </div>
                                 )}
-                                <CardFooter className="flex justify-end items-center bg-muted/40 p-2.5 mt-3 -mx-3 -mb-3 rounded-b-lg">
-                                  <Button asChild size="sm" className="h-8 bg-green-600 hover:bg-green-700">
-                                    <Link to={`/create-order/${response.id}`} className="text-xs">
-                                      <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-                                      Realizar Pedido
-                                    </Link>
-                                  </Button>
-                                </CardFooter>
-                              </AccordionContent>
-                            </AccordionItem>
+                              </CardContent>
+                              <CardFooter className="p-4 pt-0">
+                                <Button asChild size="sm" className="w-full">
+                                  <Link to={`/create-order/${response.id}`}>
+                                    <ShoppingBag className="h-4 w-4 mr-2" />
+                                    Realizar Pedido
+                                  </Link>
+                                </Button>
+                              </CardFooter>
+                            </Card>
                           );
                         } else {
                           return (
-                            <Card key={shopId} className="bg-white mb-2">
-                              <CardHeader className="p-3 flex flex-row items-center justify-between">
-                                <CardTitle className="text-sm font-semibold">{shopName}</CardTitle>
+                            <Card key={shopId} className="bg-background">
+                              <CardHeader className="p-4 flex flex-row items-center justify-between">
+                                <CardTitle className="text-base">{shopName}</CardTitle>
                                 <Badge variant="outline">Pendente</Badge>
                               </CardHeader>
                             </Card>
                           );
                         }
                       })}
-                    </Accordion>
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>

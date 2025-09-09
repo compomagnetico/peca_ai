@@ -66,13 +66,15 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-4">
       <div className="w-full max-w-md p-8 space-y-6">
-        <div className="flex items-center gap-2 justify-center">
-            <Car className="h-8 w-8 text-primary" />
-            <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Peça AI
-            </span>
+        <div className="flex items-center gap-3 justify-center">
+          <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+            <Car className="h-8 w-8" />
+          </div>
+          <span className="font-bold text-2xl">
+            Peça <span className="text-primary">AI</span>
+          </span>
         </div>
         <Card>
           <CardHeader>

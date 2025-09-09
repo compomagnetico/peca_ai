@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { showError, showLoading, dismissToast, showSuccess } from "@/utils/toast";
 import { Car } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const updatePasswordSchema = z.object({
   password: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres."),
@@ -88,7 +89,7 @@ export default function UpdatePasswordPage() {
 
   if (!tokenValidated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-secondary/40">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl">Verificando Token...</CardTitle>
@@ -104,13 +105,15 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-4">
       <div className="w-full max-w-md p-8 space-y-6">
-        <div className="flex items-center gap-2 justify-center">
-            <Car className="h-8 w-8 text-primary" />
-            <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Peça AI
-            </span>
+        <div className="flex items-center gap-3 justify-center">
+          <div className="bg-primary text-primary-foreground p-2 rounded-lg">
+            <Car className="h-8 w-8" />
+          </div>
+          <span className="font-bold text-2xl">
+            Peça <span className="text-primary">AI</span>
+          </span>
         </div>
         <Card>
           <CardHeader>

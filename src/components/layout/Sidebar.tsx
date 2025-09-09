@@ -17,13 +17,13 @@ export function Sidebar() {
   const { settings } = useAuth();
 
   return (
-    <div className="hidden border-r bg-muted/40 md:block">
+    <div className="hidden border-r bg-sidebar text-sidebar-foreground md:block">
       <div className="flex h-full max-h-screen flex-col">
-        <div className="flex h-14 flex-shrink-0 items-center gap-4 border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 flex-shrink-0 items-center gap-4 border-b border-sidebar-border px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/profile" className="flex items-center gap-3 font-semibold">
             <Avatar className="h-8 w-8">
               <AvatarImage src={settings?.logo_url || undefined} alt="Logo da Oficina" />
-              <AvatarFallback>
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
                 <Building className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
@@ -38,8 +38,8 @@ export function Sidebar() {
                 to={item.href}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    isActive && "bg-muted text-primary"
+                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                   )
                 }
               >

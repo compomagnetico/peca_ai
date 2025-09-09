@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -20,7 +21,7 @@ export function Header() {
   const { settings, signOut } = useAuth();
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
           <Button variant="outline" size="icon" className="shrink-0 md:hidden">
@@ -28,7 +29,7 @@ export function Header() {
             <span className="sr-only">Abrir menu de navegação</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
+        <SheetContent side="left" className="flex flex-col bg-sidebar text-sidebar-foreground border-sidebar-border">
           <nav className="grid gap-2 text-lg font-medium">
             <NavLink
               to="/profile"
@@ -37,7 +38,7 @@ export function Header() {
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={settings?.logo_url || undefined} alt="Logo da Oficina" />
-                <AvatarFallback>
+                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
                   <Building className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
@@ -50,7 +51,12 @@ export function Header() {
                 key={item.name}
                 to={item.href}
                 onClick={() => setIsSheetOpen(false)}
-                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+                className={({ isActive }) =>
+                  cn(
+                    "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                  )
+                }
               >
                 <item.icon className="h-5 w-5" />
                 {item.name}
@@ -58,7 +64,7 @@ export function Header() {
             ))}
           </nav>
           <div className="mt-auto">
-            <Button variant="secondary" className="w-full" onClick={signOut}>
+            <Button variant="secondary" className="w-full bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
