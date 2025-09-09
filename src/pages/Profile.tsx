@@ -33,10 +33,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
 
 const settingsSchema = z.object({
-  username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres.").max(20, "Nome de usuário não pode exceder 20 caracteres.").regex(/^[a-zA-Z0-9_]+$/, "Nome de usuário pode conter apenas letras, números e sublinhados.").toLowerCase(),
   workshop_name: z.string().min(1, "O nome da oficina é obrigatório."),
   workshop_address: z.string().min(1, "O endereço é obrigatório."),
   workshop_whatsapp: z.string().min(1, "O WhatsApp é obrigatório."),
+  city: z.string().min(1, "A cidade é obrigatória."),
   logo_url: z.string().url().optional().nullable(),
   favorite_suppliers: z.array(z.string()).optional(),
   notify_on_response: z.boolean().optional(),
@@ -56,18 +56,8 @@ const fetchData = async (userId: string) => {
     .eq("user_id", userId)
     .single();
 
-  if (settingsError && settingsError.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine on first load
+  if (settingsError && settingsError.code !== 'PGRST116') {
     throw new Error(settingsError.message);
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", userId)
-    .single();
-
-  if (profileError && profileError.code !== 'PGRST116') {
-    throw new Error(profileError.message);
   }
 
   const { data: autoParts, error: autoPartsError } = await supabase
@@ -77,13 +67,12 @@ const fetchData = async (userId: string) => {
 
   if (autoPartsError) throw new Error(autoPartsError.message);
 
-  return { settings, profile, autoParts };
+  return { settings, autoParts };
 };
 
-const updateSettingsAndProfile = async (values: Partial<Settings> & { user_id: string }) => {
-  const { user_id, username, ...settingsToUpdate } = values;
+const updateSettings = async (values: Partial<Settings> & { user_id: string }) => {
+  const { user_id, ...settingsToUpdate } = values;
 
-  // Update settings table
   const { data: settingsData, error: settingsError } = await supabase
     .from("settings")
     .upsert({ ...settingsToUpdate, user_id }, { onConflict: 'user_id' })
@@ -92,17 +81,7 @@ const updateSettingsAndProfile = async (values: Partial<Settings> & { user_id: s
   
   if (settingsError) throw new Error(settingsError.message);
 
-  // Update profiles table for username
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .update({ username })
-    .eq("id", user_id)
-    .select()
-    .single();
-
-  if (profileError) throw new Error(profileError.message);
-
-  return { settingsData, profileData };
+  return { settingsData };
 };
 
 const ProfilePage = () => {
@@ -116,9 +95,10 @@ const ProfilePage = () => {
   });
 
   const mutation = useMutation({
-    mutationFn: updateSettingsAndProfile,
+    mutationFn: updateSettings,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profileData", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["authData"] }); // To update sidebar name
       showSuccess("Perfil atualizado com sucesso!");
     },
     onError: (error) => {
@@ -129,10 +109,10 @@ const ProfilePage = () => {
   const form = useForm<Settings>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      username: "",
       workshop_name: "",
       workshop_address: "",
       workshop_whatsapp: "",
+      city: "",
       logo_url: null,
       favorite_suppliers: [],
       notify_on_response: true,
@@ -140,11 +120,8 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (data) {
-      form.reset({
-        ...data.settings,
-        username: data.profile?.username || "",
-      });
+    if (data?.settings) {
+      form.reset(data.settings);
     }
   }, [data, form]);
 
@@ -173,23 +150,6 @@ const ProfilePage = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardContent className="space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Informações da Conta</h3>
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome de Usuário</FormLabel>
-                        <FormControl>
-                          <Input placeholder="seu_usuario" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Informações da Oficina</h3>
                   <FormField
@@ -223,6 +183,19 @@ const ProfilePage = () => {
                   />
                   <FormField
                     control={form.control}
+                    name="workshop_whatsapp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WhatsApp</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: (11) 98888-7777" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="workshop_address"
                     render={({ field }) => (
                       <FormItem>
@@ -236,12 +209,12 @@ const ProfilePage = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="workshop_whatsapp"
+                    name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>WhatsApp</FormLabel>
+                        <FormLabel>Cidade</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ex: (11) 98888-7777" {...field} />
+                          <Input placeholder="Ex: Barra Mansa" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

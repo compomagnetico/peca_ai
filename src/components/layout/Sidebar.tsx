@@ -19,8 +19,8 @@ export function Sidebar() {
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center gap-4 border-b px-4 lg:h-[60px] lg:px-6">
+      <div className="flex h-full max-h-screen flex-col">
+        <div className="flex h-14 flex-shrink-0 items-center gap-4 border-b px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/profile" className="flex items-center gap-3 font-semibold">
             <Avatar className="h-8 w-8">
               <AvatarImage src={settings?.logo_url || undefined} alt="Logo da Oficina" />
@@ -50,7 +50,7 @@ export function Sidebar() {
             ))}
           </nav>
         </div>
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto flex-shrink-0 border-t p-4">
           <Button variant="ghost" className="w-full justify-start" onClick={signOut}>
             <LogOut className="mr-2 h-4 w-4" />
             Sair
