@@ -65,14 +65,14 @@ export default function LoginPage() {
       // A navegação será tratada pelo AuthProvider
     } catch (error) {
       dismissToast(toastId);
-      showError(`Erro no login: ${error instanceof Error ? error.message : "Credenciais inválidas"}`);
+      showError("E-mail ou senha inválidos. Por favor, tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-3 justify-center">
           <div className="bg-primary text-primary-foreground p-2 rounded-lg">

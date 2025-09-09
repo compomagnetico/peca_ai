@@ -89,7 +89,7 @@ export default function UpdatePasswordPage() {
 
   if (!tokenValidated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-secondary/40">
+      <div className="min-h-screen flex items-center justify-center bg-muted p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl">Verificando Token...</CardTitle>
@@ -105,7 +105,7 @@ export default function UpdatePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md p-8 space-y-6">
         <div className="flex items-center gap-3 justify-center">
           <div className="bg-primary text-primary-foreground p-2 rounded-lg">

@@ -168,8 +168,8 @@ export function AutoPartsManager() {
     <div className="space-y-8 w-full max-w-lg">
       <Card>
         <CardHeader>
-          <CardTitle>Cadastrar Fornecedor</CardTitle>
-          <CardDescription>Adicione um novo fornecedor de autopeças.</CardDescription>
+          <CardTitle>Cadastrar Autopeça</CardTitle>
+          <CardDescription>Adicione um novo fornecedor.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...addForm}>
@@ -184,7 +184,7 @@ export function AutoPartsManager() {
                   <FormItem>
                     <FormLabel>Nome</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Fornecedor de Peças ABC" {...field} />
+                      <Input placeholder="Ex: Loja de Peças ABC" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,7 +213,7 @@ export function AutoPartsManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Fornecedores</CardTitle>
+          <CardTitle>Lista de Autopeças</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -264,7 +264,7 @@ export function AutoPartsManager() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Fornecedor</DialogTitle>
+            <DialogTitle>Editar Autopeça</DialogTitle>
           </DialogHeader>
           <Form {...editForm}>
             <form

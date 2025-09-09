@@ -61,7 +61,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Bem-vindo, {settings?.workshop_name || "Mecânico"}!</h1>
-        <p className="text-muted-foreground">Aqui está um resumo da sua atividade recente.</p>
+        <p className="text-muted-foreground">Aqui está um resumo dos seus orçamentos recentes.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard 

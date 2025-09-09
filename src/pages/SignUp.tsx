@@ -89,7 +89,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-secondary/40 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex items-center gap-3 justify-center">
           <div className="bg-primary text-primary-foreground p-2 rounded-lg">
