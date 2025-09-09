@@ -1,19 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Car } from "lucide-react";
-import { SignUpForm } from "@/components/SignUpForm";
-import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const [view, setView] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     if (session) {
@@ -31,39 +28,50 @@ const LoginPage = () => {
             </span>
         </div>
         
-        {view === "login" ? (
-          <div>
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              providers={[]}
-              showLinks={false}
-              theme="light"
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: "Endereço de e-mail",
-                    password_label: "Sua senha",
-                    button_label: "Entrar",
-                  },
-                  forgotten_password: {
-                    email_label: "Endereço de e-mail",
-                    button_label: "Enviar instruções de recuperação",
-                    link_text: "Esqueceu sua senha?",
-                  },
-                },
-              }}
-            />
-             <div className="mt-4 text-center text-sm">
-              Não tem uma conta?{" "}
-              <Button variant="link" className="p-0 h-auto" onClick={() => setView("signup")}>
-                Cadastre-se
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <SignUpForm onSwitchToLogin={() => setView("login")} />
-        )}
+        <Auth
+          supabaseClient={supabase}
+          appearance={{ theme: ThemeSupa }}
+          providers={["email", "phone"]} {/* Habilita cadastro por e-mail e telefone */}
+          showLinks={true} {/* Mostra links para cadastro e recuperação de senha */}
+          theme="light"
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: "Endereço de e-mail",
+                password_label: "Sua senha",
+                button_label: "Entrar",
+                phone_label: "Número de Telefone",
+                phone_input_placeholder: "Ex: +5511988887777",
+              },
+              sign_up: {
+                email_label: "Endereço de e-mail",
+                password_label: "Crie sua senha",
+                button_label: "Cadastrar",
+                phone_label: "Número de Telefone",
+                phone_input_placeholder: "Ex: +5511988887777",
+                link_text: "Não tem uma conta? Cadastre-se",
+              },
+              forgotten_password: {
+                email_label: "Endereço de e-mail",
+                button_label: "Enviar instruções de recuperação",
+                link_text: "Esqueceu sua senha?",
+              },
+            },
+          }}
+          form_fields={{
+            sign_up: {
+              city: {
+                label: 'Cidade da Oficina',
+                type: 'select',
+                options: [
+                  { value: 'Barra Mansa', label: 'Barra Mansa' },
+                  { value: 'Volta Redonda', label: 'Volta Redonda' },
+                ],
+                // O Supabase Auth UI automaticamente salva este campo em user_metadata
+              },
+            },
+          }}
+        />
       </div>
     </div>
   );
