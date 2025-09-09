@@ -210,22 +210,24 @@ export function SubmitBudgetResponseForm() {
                       const originalPart = request.parts.find(p => p.name === field.part);
                       return (
                       <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center justify-between gap-4">
                           <div className="flex-1">
-                            <span className="font-medium text-base pt-2">{field.part}</span>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Marca: {originalPart?.brand || "Não especificado"}
-                            </p>
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Código: {originalPart?.partCode || "Não especificado"}
-                            </p>
+                            <span className="font-semibold text-lg">{field.part}</span>
+                            <div className="mt-1 space-y-0.5">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Marca: {originalPart?.brand || "Não especificado"}
+                              </p>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Código: {originalPart?.partCode || "Não especificado"}
+                              </p>
+                            </div>
                           </div>
                           <FormField
                             control={form.control}
                             name={`parts_and_prices.${index}.price`}
                             render={({ field: priceField }) => (
-                              <FormItem className="flex flex-col items-end">
-                                <FormLabel className="text-sm">Valor</FormLabel> {/* Adicionado o rótulo "Valor" */}
+                              <FormItem className="flex flex-row items-center gap-2">
+                                <FormLabel className="text-base font-medium">Valor</FormLabel>
                                 <FormControl>
                                   <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">R$</span>
