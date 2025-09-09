@@ -136,7 +136,7 @@ export function BudgetRequestForm() {
         return;
     }
     if (selectedShops.length === 0) {
-      showError("Selecione pelo menos um fornecedor para enviar o orçamento.");
+      showError("Selecione pelo menos uma autopeça para enviar o orçamento.");
       return;
     }
 
@@ -215,7 +215,7 @@ export function BudgetRequestForm() {
       <CardHeader>
         <CardTitle>Solicitar Orçamento de Peça</CardTitle>
         <CardDescription>
-          Preencha os detalhes do carro, adicione as peças e selecione para quais fornecedores enviar.
+          Preencha os detalhes do carro, adicione as peças e selecione para quais autopeças enviar.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -372,8 +372,8 @@ export function BudgetRequestForm() {
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-2">Enviar para Fornecedores</h3>
-              <FormLabel>Selecione os fornecedores para enviar o orçamento:</FormLabel>
+              <h3 className="text-lg font-semibold mb-2">Enviar para Autopeças</h3>
+              <FormLabel>Selecione as autopeças para enviar o orçamento:</FormLabel>
               {isLoading ? (
                  <div className="space-y-2 mt-2">
                     <Skeleton className="h-10 w-full" />

@@ -235,9 +235,9 @@ const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Fornecedores Favoritos</h3>
+                  <h3 className="text-lg font-medium">Autopeças Favoritas</h3>
                   <p className="text-sm text-muted-foreground">
-                    Selecione os fornecedores que devem ser pré-selecionados ao criar um novo orçamento.
+                    Selecione as autopeças que devem ser pré-selecionadas ao criar um novo orçamento.
                   </p>
                   <FormField
                     control={form.control}

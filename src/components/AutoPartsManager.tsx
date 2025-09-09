@@ -169,7 +169,7 @@ export function AutoPartsManager() {
       <Card>
         <CardHeader>
           <CardTitle>Cadastrar Autopeça</CardTitle>
-          <CardDescription>Adicione um novo fornecedor.</CardDescription>
+          <CardDescription>Adicione uma nova autopeça.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...addForm}>
