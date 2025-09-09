@@ -143,6 +143,8 @@ export function SubmitBudgetResponseForm() {
     } catch (error) {
       dismissToast(toastId);
       showError(`Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+    } finally {
+      // setIsSubmitting(false); // This state is not used in this component
     }
   }
 
@@ -204,10 +206,20 @@ export function SubmitBudgetResponseForm() {
                 <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Preços das Peças</h3>
                 <div className="space-y-4">
-                    {fields.map((field, index) => (
+                    {fields.map((field, index) => {
+                      const originalPart = request.parts.find(p => p.name === field.part);
+                      return (
                       <div key={field.id} className="p-4 border rounded-lg space-y-4">
                         <div className="flex items-start justify-between gap-4">
-                          <span className="font-medium text-base pt-2 flex-1">{field.part}</span>
+                          <div className="flex-1">
+                            <span className="font-medium text-base pt-2">{field.part}</span>
+                            <p className="text-xs text-muted-foreground">
+                              Marca: {originalPart?.brand || "Não especificado"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Código: {originalPart?.partCode || "Não especificado"}
+                            </p>
+                          </div>
                           <FormField
                             control={form.control}
                             name={`parts_and_prices.${index}.price`}
@@ -261,7 +273,7 @@ export function SubmitBudgetResponseForm() {
                           )}
                         />
                       </div>
-                    ))}
+                    );})}
                 </div>
                 </div>
             </CardContent>

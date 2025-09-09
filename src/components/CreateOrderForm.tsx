@@ -38,7 +38,9 @@ const orderFormSchema = z.object({
     selected: z.boolean().default(false),
     part: z.string(),
     price: z.number(),
-    quantity: z.coerce.number().min(0, "A quantidade não pode ser negativa.").optional(), // Alterado para permitir 0
+    quantity: z.coerce.number().min(0, "A quantidade não pode ser negativa.").optional(),
+    brand: z.string().optional(), // Adicionado
+    partCode: z.string().optional(), // Adicionado
   })).min(1, "Selecione pelo menos uma peça."),
   paymentMethod: z.enum(["pix", "card", "cash"], {
     required_error: "Selecione uma forma de pagamento.",
@@ -53,7 +55,7 @@ const orderFormSchema = z.object({
         if (part.selected && (!part.quantity || part.quantity < 1)) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "A quantidade deve ser pelo menos 1 se a peça estiver selecionada.", // Mensagem ajustada
+                message: "A quantidade deve ser pelo menos 1 se a peça estiver selecionada.",
                 path: [`parts`, index, `quantity`],
             });
         }
@@ -71,11 +73,31 @@ type BudgetResponse = {
   shop_id: string;
 };
 
+type BudgetRequest = {
+  id: string;
+  short_id: number;
+  car_model: string;
+  car_year: string;
+  car_engine?: string;
+  parts: { name: string; brand?: string; partCode?: string }[];
+  notes?: string;
+};
+
 const fetchBudgetResponse = async (responseId: string): Promise<BudgetResponse> => {
   const { data, error } = await supabase
     .from("budget_responses")
     .select("*")
     .eq("id", responseId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+const fetchBudgetRequestById = async (requestId: string): Promise<BudgetRequest> => {
+  const { data, error } = await supabase
+    .from("budget_requests")
+    .select("*")
+    .eq("id", requestId)
     .single();
   if (error) throw new Error(error.message);
   return data;
@@ -93,10 +115,16 @@ export function CreateOrderForm() {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: budgetResponse, isLoading } = useQuery<BudgetResponse>({
+  const { data: budgetResponse, isLoading: isLoadingResponse } = useQuery<BudgetResponse>({
     queryKey: ["budgetResponse", responseId],
     queryFn: () => fetchBudgetResponse(responseId!),
     enabled: !!responseId,
+  });
+
+  const { data: originalRequest, isLoading: isLoadingRequest } = useQuery<BudgetRequest>({
+    queryKey: ["originalBudgetRequest", budgetResponse?.request_id],
+    queryFn: () => fetchBudgetRequestById(budgetResponse!.request_id),
+    enabled: !!budgetResponse?.request_id,
   });
 
   const form = useForm<z.infer<typeof orderFormSchema>>({
@@ -113,15 +141,20 @@ export function CreateOrderForm() {
   });
 
   useEffect(() => {
-    if (budgetResponse) {
-      const partsForForm = budgetResponse.parts_and_prices.map(p => ({
-        ...p,
-        selected: true,
-        quantity: 0, // Alterado para 0 como padrão
-      }));
+    if (budgetResponse && originalRequest) {
+      const partsForForm = budgetResponse.parts_and_prices.map(p => {
+        const originalPart = originalRequest.parts.find(op => op.name === p.part);
+        return {
+          ...p,
+          selected: true,
+          quantity: 0,
+          brand: originalPart?.brand,
+          partCode: originalPart?.partCode,
+        };
+      });
       replace(partsForForm);
     }
-  }, [budgetResponse, replace]);
+  }, [budgetResponse, originalRequest, replace]);
 
   const watchedParts = useWatch({
     control: form.control,
@@ -137,7 +170,7 @@ export function CreateOrderForm() {
     return watchedParts.reduce((total, part) => {
       if (part.selected) {
         const quantity = Number(part.quantity);
-        if (!isNaN(quantity) && quantity > 0) { // Apenas soma se a quantidade for maior que 0
+        if (!isNaN(quantity) && quantity > 0) {
           return total + part.price * quantity;
         }
       }
@@ -159,7 +192,7 @@ export function CreateOrderForm() {
     setIsSubmitting(true);
 
     const orderedParts = values.parts
-      .filter((p) => p.selected && (p.quantity && p.quantity > 0)) // Filtra apenas peças selecionadas com quantidade > 0
+      .filter((p) => p.selected && (p.quantity && p.quantity > 0))
       .map(({ part, price, quantity }) => ({ part, price, quantity }));
 
     if (orderedParts.length === 0) {
@@ -241,12 +274,12 @@ export function CreateOrderForm() {
     }
   }
 
-  if (isLoading) {
+  if (isLoadingResponse || isLoadingRequest) {
     return <Skeleton className="w-full max-w-2xl h-96" />;
   }
 
-  if (!budgetResponse) {
-    return <div className="text-center">Resposta de orçamento não encontrada.</div>;
+  if (!budgetResponse || !originalRequest) {
+    return <div className="text-center">Resposta de orçamento ou solicitação original não encontrada.</div>;
   }
 
   return (
@@ -297,7 +330,7 @@ export function CreateOrderForm() {
                                 <FormControl>
                                     <Input
                                       type="number"
-                                      min="0" // Alterado para min="0"
+                                      min="0"
                                       placeholder="Qtd."
                                       {...field}
                                       value={field.value ?? ""}
@@ -308,6 +341,10 @@ export function CreateOrderForm() {
                                 </FormItem>
                             )}
                         />
+                        <div className="col-span-3 text-xs text-muted-foreground">
+                            <p>Marca: {field.brand || "Não especificado"}</p>
+                            <p>Código: {field.partCode || "Não especificado"}</p>
+                        </div>
                     </div>
                   </div>
                 ))}
