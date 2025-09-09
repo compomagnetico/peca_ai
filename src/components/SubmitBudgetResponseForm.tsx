@@ -213,10 +213,10 @@ export function SubmitBudgetResponseForm() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <span className="font-medium text-base pt-2">{field.part}</span>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               Marca: {originalPart?.brand || "Não especificado"}
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                               Código: {originalPart?.partCode || "Não especificado"}
                             </p>
                           </div>
@@ -224,7 +224,8 @@ export function SubmitBudgetResponseForm() {
                             control={form.control}
                             name={`parts_and_prices.${index}.price`}
                             render={({ field: priceField }) => (
-                              <FormItem>
+                              <FormItem className="flex flex-col items-end">
+                                <FormLabel className="text-sm">Valor</FormLabel> {/* Adicionado o rótulo "Valor" */}
                                 <FormControl>
                                   <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-base">R$</span>
