@@ -31,6 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/contexts/AuthContext";
+import { LogOut } from "lucide-react";
 
 const settingsSchema = z.object({
   workshop_name: z.string().min(1, "O nome da oficina é obrigatório."),
@@ -86,7 +87,7 @@ const updateSettings = async (values: Partial<Settings> & { user_id: string }) =
 
 const ProfilePage = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["profileData", user?.id],
@@ -131,7 +132,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex flex-col items-center gap-8">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle>Perfil e Configurações</CardTitle>
@@ -296,6 +297,27 @@ const ProfilePage = () => {
             </form>
           </Form>
         )}
+      </Card>
+
+      <Card className="w-full max-w-2xl border-destructive">
+        <CardHeader>
+          <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+          <CardDescription>
+            Ações que não podem ser desfeitas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Sair da sua conta</p>
+              <p className="text-sm text-muted-foreground">Você será redirecionado para a página de login.</p>
+            </div>
+            <Button variant="destructive" onClick={signOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </Button>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

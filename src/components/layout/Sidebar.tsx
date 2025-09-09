@@ -1,8 +1,7 @@
 import { NavLink } from "react-router-dom";
-import { Home, FileText, User, Inbox, BrainCircuit, LogOut, Building, Car as CarIcon } from "lucide-react";
+import { Home, FileText, User, Inbox, BrainCircuit, Building, Car as CarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navigation = [
@@ -15,7 +14,7 @@ const navigation = [
 ];
 
 export function Sidebar() {
-  const { settings, signOut } = useAuth();
+  const { settings } = useAuth();
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
@@ -49,16 +48,6 @@ export function Sidebar() {
               </NavLink>
             ))}
           </nav>
-        </div>
-        <div className="mt-auto flex-shrink-0 border-t p-4">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-600 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/50 dark:text-red-500 dark:hover:text-red-400"
-            onClick={signOut}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
         </div>
       </div>
     </div>
