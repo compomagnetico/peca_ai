@@ -38,7 +38,7 @@ const orderFormSchema = z.object({
     selected: z.boolean().default(false),
     part: z.string(),
     price: z.number(),
-    quantity: z.coerce.number().optional(),
+    quantity: z.coerce.number().min(0, "A quantidade não pode ser negativa.").optional(), // Alterado para permitir 0
   })).min(1, "Selecione pelo menos uma peça."),
   paymentMethod: z.enum(["pix", "card", "cash"], {
     required_error: "Selecione uma forma de pagamento.",
@@ -53,7 +53,7 @@ const orderFormSchema = z.object({
         if (part.selected && (!part.quantity || part.quantity < 1)) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "A quantidade deve ser pelo menos 1.",
+                message: "A quantidade deve ser pelo menos 1 se a peça estiver selecionada.", // Mensagem ajustada
                 path: [`parts`, index, `quantity`],
             });
         }
@@ -117,7 +117,7 @@ export function CreateOrderForm() {
       const partsForForm = budgetResponse.parts_and_prices.map(p => ({
         ...p,
         selected: true,
-        quantity: 1,
+        quantity: 0, // Alterado para 0 como padrão
       }));
       replace(partsForForm);
     }
@@ -137,7 +137,7 @@ export function CreateOrderForm() {
     return watchedParts.reduce((total, part) => {
       if (part.selected) {
         const quantity = Number(part.quantity);
-        if (!isNaN(quantity) && quantity > 0) {
+        if (!isNaN(quantity) && quantity > 0) { // Apenas soma se a quantidade for maior que 0
           return total + part.price * quantity;
         }
       }
@@ -159,8 +159,15 @@ export function CreateOrderForm() {
     setIsSubmitting(true);
 
     const orderedParts = values.parts
-      .filter((p) => p.selected)
+      .filter((p) => p.selected && (p.quantity && p.quantity > 0)) // Filtra apenas peças selecionadas com quantidade > 0
       .map(({ part, price, quantity }) => ({ part, price, quantity }));
+
+    if (orderedParts.length === 0) {
+      dismissToast(toastId);
+      showError("Selecione pelo menos uma peça com quantidade maior que zero para o pedido.");
+      setIsSubmitting(false);
+      return;
+    }
 
     const orderData = {
       user_id: user.id,
@@ -290,7 +297,7 @@ export function CreateOrderForm() {
                                 <FormControl>
                                     <Input
                                       type="number"
-                                      min="1"
+                                      min="0" // Alterado para min="0"
                                       placeholder="Qtd."
                                       {...field}
                                       value={field.value ?? ""}
