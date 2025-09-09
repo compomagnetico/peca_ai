@@ -178,14 +178,22 @@ export function BudgetRequestForm() {
         selectedShops: selectedShopsDetails,
       };
 
-      const response = await fetch("https://webhook.usoteste.shop/webhook/teste", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      // Chamar a Edge Function em vez do webhook direto
+      const edgeFunctionResponse = await fetch(
+        "https://gjztnnhsfkbqxkwkbxof.supabase.co/functions/v1/send-budget-request-webhook",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error("Falha ao enviar a requisição para o webhook.");
+      if (!edgeFunctionResponse.ok) {
+        const errorResult = await edgeFunctionResponse.json();
+        throw new Error(errorResult.error || "Falha ao invocar a Edge Function.");
       }
 
       dismissToast(toastId);
