@@ -1,62 +1,44 @@
 import { NavLink } from "react-router-dom";
-import { Home, Car, FileText, User, Inbox, BrainCircuit, LogOut } from "lucide-react";
+import { Car, BrainCircuit } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext"; // Importar useAuth
-import { Button } from "@/components/ui/button"; // Importar Button
-
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
-  { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
-  { name: "Auto Peças", href: "/auto-parts", icon: Car },
-  { name: "Assistente AI", href: "/assistant", icon: BrainCircuit },
-  { name: "Perfil", href: "/profile", icon: User },
-];
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function Sidebar() {
-  const { user, profile, signOut } = useAuth(); // Usar useAuth
-
   return (
     <div className="hidden border-r bg-muted/40 md:block">
-      <div className="flex h-full max-h-screen flex-col gap-2">
+      <div className="flex h-full max-h-screen flex-col items-center gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <NavLink to="/" className="flex items-center gap-2">
             <Car className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Peça AI
-            </span>
+            <span className="sr-only">Peça AI</span>
           </NavLink>
         </div>
-        <div className="flex-1">
-          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {navigation.map((item) => (
-              <NavLink
-                key={item.name}
-                to={item.href}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    isActive && "bg-muted text-primary"
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                {item.name}
-              </NavLink>
-            ))}
+        <TooltipProvider>
+          <nav className="flex flex-col items-center gap-4 px-2 py-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/assistant"
+                  className={({ isActive }) =>
+                    cn(
+                      "flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8",
+                      isActive && "bg-accent text-accent-foreground"
+                    )
+                  }
+                >
+                  <BrainCircuit className="h-5 w-5" />
+                  <span className="sr-only">Assistente AI</span>
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">Assistente AI</TooltipContent>
+            </Tooltip>
           </nav>
-        </div>
-        <div className="mt-auto p-4 border-t">
-          {user && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Olá, {profile?.username || user.email || user.phone || "Usuário"}</span>
-              <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8">
-                <LogOut className="h-4 w-4" />
-                <span className="sr-only">Sair</span>
-              </Button>
-            </div>
-          )}
-        </div>
+        </TooltipProvider>
       </div>
     </div>
   );

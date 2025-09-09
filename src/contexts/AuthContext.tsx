@@ -7,16 +7,19 @@ import { useNavigate } from "react-router-dom";
 
 type Profile = {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-  username: string | null; // Adicionado username ao tipo Profile
+  username: string | null;
+};
+
+type Settings = {
+  workshop_name: string | null;
+  logo_url: string | null;
 };
 
 type AuthContextType = {
   session: Session | null;
   user: User | null;
-  profile: Profile | null; // Adicionado profile ao contexto
+  profile: Profile | null;
+  settings: Settings | null;
   signOut: () => void;
 };
 
@@ -25,46 +28,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null); // Estado para o perfil
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserProfile = async (userId: string) => {
-      const { data, error } = await supabase
+    const fetchUserData = async (userId: string) => {
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("id, username")
         .eq("id", userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found, which is fine
-        console.error("Error fetching user profile:", error);
-        setProfile(null);
-      } else if (data) {
-        setProfile(data as Profile);
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Error fetching user profile:", profileError);
       } else {
-        setProfile(null);
+        setProfile(profileData as Profile);
+      }
+
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("settings")
+        .select("workshop_name, logo_url")
+        .eq("user_id", userId)
+        .single();
+      
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error("Error fetching user settings:", settingsError);
+      } else {
+        setSettings(settingsData as Settings);
       }
     };
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      async (event, currentSession) => {
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        const currentUser = currentSession?.user ?? null;
+        setUser(currentUser);
 
-        if (currentSession?.user) {
-          fetchUserProfile(currentSession.user.id);
+        if (currentUser) {
+          await fetchUserData(currentUser.id);
         } else {
           setProfile(null);
+          setSettings(null);
         }
       }
     );
 
-    // Pega a sessão inicial e o perfil
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      if (initialSession?.user) {
-        await fetchUserProfile(initialSession.user.id);
+      const initialUser = initialSession?.user ?? null;
+      setUser(initialUser);
+      if (initialUser) {
+        await fetchUserData(initialUser.id);
       }
     });
 
@@ -75,12 +90,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setProfile(null); // Limpa o perfil ao sair
+    setProfile(null);
+    setSettings(null);
     navigate("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, signOut }}>
+    <AuthContext.Provider value={{ session, user, profile, settings, signOut }}>
       {children}
     </AuthContext.Provider>
   );
