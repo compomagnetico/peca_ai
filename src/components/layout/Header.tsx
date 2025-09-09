@@ -1,29 +1,18 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Menu, Car, Home, FileText, User, Inbox, BrainCircuit, LogOut, Building } from "lucide-react";
+import { Menu, Home, FileText, User, Inbox, BrainCircuit, LogOut, Building, Car as CarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 
-const mainNavigation = [
+const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
   { name: "Solicitar Orçamento", href: "/budget-request", icon: FileText },
   { name: "Orçamentos", href: "/budget-responses", icon: Inbox },
-  { name: "Auto Peças", href: "/auto-parts", icon: Car },
-  { name: "Perfil", href: "/profile", icon: User },
-];
-
-const secondaryNavigation = [
+  { name: "Auto Peças", href: "/auto-parts", icon: CarIcon },
   { name: "Assistente AI", href: "/assistant", icon: BrainCircuit },
+  { name: "Perfil", href: "/profile", icon: User },
 ];
 
 export function Header() {
@@ -42,16 +31,21 @@ export function Header() {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-2 text-lg font-medium">
             <NavLink
-              to="/"
-              className="flex items-center gap-2 mb-4"
+              to="/profile"
+              className="flex items-center gap-4 mb-4"
               onClick={() => setIsSheetOpen(false)}
             >
-              <Car className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-                Peça AI
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={settings?.logo_url || undefined} alt="Logo da Oficina" />
+                <AvatarFallback>
+                  <Building className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-bold text-xl truncate">
+                {settings?.workshop_name || "Oficina"}
               </span>
             </NavLink>
-            {[...mainNavigation, ...secondaryNavigation].map((item) => (
+            {navigation.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.href}
@@ -73,44 +67,8 @@ export function Header() {
       </Sheet>
       
       <div className="w-full flex-1">
-        {/* Espaço para busca ou título da página no futuro */}
+        {/* Conteúdo do cabeçalho, como uma barra de busca, pode ser adicionado aqui no futuro. */}
       </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" className="rounded-full">
-            <Avatar>
-              <AvatarImage src={settings?.logo_url || undefined} alt="Logo da Oficina" />
-              <AvatarFallback>
-                <Building className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
-            <span className="sr-only">Abrir menu do usuário</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>
-            <p>Minha Conta</p>
-            <p className="text-xs font-normal text-muted-foreground">
-              Olá, {settings?.workshop_name || "Oficina"}
-            </p>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {mainNavigation.map((item) => (
-            <NavLink to={item.href} key={item.name}>
-              <DropdownMenuItem className="cursor-pointer">
-                <item.icon className="mr-2 h-4 w-4" />
-                <span>{item.name}</span>
-              </DropdownMenuItem>
-            </NavLink>
-          ))}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600 focus:text-red-600">
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sair</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }
